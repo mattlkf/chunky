@@ -27,6 +27,7 @@
 #include "src/protos/helloworld.grpc.pb.h"
 
 #include "absl/flags/flag.h"
+#include "absl/flags/usage.h"
 #include "absl/flags/parse.h"
 
 ABSL_FLAG(std::string, self_ip, "0.0.0.0", "my ip");
@@ -129,7 +130,7 @@ void RunServer() {
 }
 
 void RunClient() {
-	std::cout << "Running the client" << std::endl;
+  std::cout << "Running the client" << std::endl;
   std::string server_ip = absl::GetFlag(FLAGS_other_ip);
   std::string server_port = absl::GetFlag(FLAGS_other_port);
   std::string server_address = server_ip + ":" + server_port;
@@ -145,38 +146,40 @@ void RunClient() {
   std::string user("world");
 
   // Run the "client"
-	while(true) {	
+  while(true) {
     std::string reply = greeter.SayHello(user);
     std::cout << "Greeter received: " << reply << std::endl;
 
-		// create a time point pointing to 1 second in future
-		std::chrono::system_clock::time_point timePoint =
-		std::chrono::system_clock::now() + std::chrono::seconds(1);
-		std::cout << "Going to Sleep Until :: "; print_time_point(timePoint);
-		// Sleep Till specified time point
-		// Accepts std::chrono::system_clock::time_point as argument
-		std::this_thread::sleep_until(timePoint);
-		std::cout<<"Current Time :: ";
-		// Print Current Time
-		print_time_point(std::chrono::system_clock::now());
+    // create a time point pointing to 1 second in future
+    std::chrono::system_clock::time_point timePoint =
+        std::chrono::system_clock::now() + std::chrono::seconds(3);
+    std::cout << "Going to Sleep Until :: ";
+    print_time_point(timePoint);
+    // Sleep Till specified time point
+    // Accepts std::chrono::system_clock::time_point as argument
+    std::this_thread::sleep_until(timePoint);
+    std::cout << "Current Time :: ";
+    // Print Current Time
+    print_time_point(std::chrono::system_clock::now());
   }
 }
 
 int main(int argc, char **argv) {
+  absl::SetProgramUsageMessage("A simple bidirectional ping");
   // Parse command line arguments
   absl::ParseCommandLine(argc, argv);
 
-	print_time_point(std::chrono::system_clock::now());
+  print_time_point(std::chrono::system_clock::now());
 
   // Begin the server in a separate thread
-	std::thread th(&RunServer);
+  std::thread th(&RunServer);
 
   // Begin the client
   RunClient();
 
-	// Wait for the server to exit
-	std::cout << "Waiting for the server to exit" << std::endl;
-	th.join();
+  // Wait for the server to exit
+  std::cout << "Waiting for the server to exit" << std::endl;
+  th.join();
 
   return 0;
 }
