@@ -1,11 +1,34 @@
 load("@com_github_grpc_grpc//bazel:cc_grpc_library.bzl", "cc_grpc_library")
+load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
 package(default_visibility = ["//visibility:public"])
+
+cc_library(
+    name = "master_track_chunkservers",
+    srcs = ["master_track_chunkservers.cc"],
+    hdrs = ["master_track_chunkservers.h"],
+    deps = [
+    ],
+)
+
+cc_library(
+    name = "master_grpc",
+    srcs = ["master_grpc.cc"],
+    hdrs = ["master_grpc.h"],
+    deps = [
+        "//src/protos/master:master_cc_grpc",
+        "@com_github_grpc_grpc//:grpc++",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/flags:parse",
+    ],
+)
 
 cc_binary(
     name = "master",
     srcs = ["master.cc"],
     defines = ["BAZEL_BUILD"],
     deps = [
+        ":master_track_chunkservers",
+        ":master_grpc",
         "//src/protos/master:master_cc_grpc",
         # http_archive made this label available for binding
         "@com_github_grpc_grpc//:grpc++",
