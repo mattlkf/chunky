@@ -24,6 +24,7 @@ using namespace std;
 Status MasterServiceImpl::SayHello(ServerContext *context, const HelloRequest *request,
                 HelloReply *reply) {
   std::string prefix("Master says ");
+  trackchunkservers->hi();
   reply->set_message(prefix + request->name());
   return Status::OK;
 }

@@ -13,6 +13,7 @@
 #include "absl/flags/parse.h"
 
 #include "src/master/master_grpc.h"
+#include "src/master/master_track_chunkservers.h"
 
 ABSL_FLAG(std::string, self_ip, "0.0.0.0", "my ip");
 ABSL_FLAG(std::string, self_port, "50052", "my port");
@@ -24,13 +25,15 @@ void print_time_point(std::chrono::system_clock::time_point timePoint) {
 }
 
 void RunServer() {
-
   std::string my_ip = absl::GetFlag(FLAGS_self_ip);
   std::string my_port = absl::GetFlag(FLAGS_self_port);
   std::string my_address = my_ip + ":" + my_port;
   std::cout << "Master's own address: " << my_address << std::endl;
 
-  MasterServiceImpl service;
+  // Create logic classes
+  MasterTrackChunkservers trackchunkservers;
+
+  MasterServiceImpl service(&trackchunkservers);
 
   ServerBuilder builder;
   // Listen on the given address without any authentication mechanism.
