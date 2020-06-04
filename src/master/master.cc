@@ -48,14 +48,14 @@ using namespace std;
 class MasterServiceImpl final : public Master::Service {
   Status SayHello(ServerContext *context, const HelloRequest *request,
                   HelloReply *reply) override {
-    std::string prefix("Hello ");
+    std::string prefix("Master says ");
     reply->set_message(prefix + request->name());
     return Status::OK;
   }
 
   Status SayHelloAgain(ServerContext *context, const HelloRequest *request,
                        HelloReply *reply) override {
-    std::string prefix("Hello again ");
+    std::string prefix("Master says again ");
     reply->set_message(prefix + request->name());
     return Status::OK;
   }
@@ -84,7 +84,7 @@ void RunServer() {
   builder.RegisterService(&service);
   // Finally assemble the server.
   std::unique_ptr<Server> server(builder.BuildAndStart());
-  std::cout << "Server listening on " << my_address << std::endl;
+  std::cout << "Master Server listening on " << my_address << std::endl;
 
   // Wait for the server to shutdown. Note that some other thread must be
   // responsible for shutting down the server for this call to ever return.

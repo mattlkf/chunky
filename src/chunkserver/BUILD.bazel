@@ -7,6 +7,7 @@ cc_binary(
     defines = ["BAZEL_BUILD"],
     deps = [
         "//src/protos/chunk_report:chunk_report_cc_grpc",
+        "//src/protos/master:master_cc_grpc",
         # http_archive made this label available for binding
         "@com_github_grpc_grpc//:grpc++",
         "@com_google_absl//absl/flags:flag",

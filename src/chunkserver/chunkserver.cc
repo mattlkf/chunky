@@ -24,7 +24,8 @@
 
 #include <grpcpp/grpcpp.h>
 
-#include "src/protos/chunk_report/chunk_report.grpc.pb.h"
+#include "src/protos/master/master.grpc.pb.h"
+/* #include "src/protos/chunk_report/chunk_report.grpc.pb.h" */
 
 #include "absl/flags/flag.h"
 #include "absl/flags/usage.h"
@@ -41,16 +42,16 @@ using grpc::Server;
 using grpc::ServerBuilder;
 using grpc::ServerContext;
 using grpc::Status;
-using chunk_report::Greeter;
-using chunk_report::HelloReply;
-using chunk_report::HelloRequest;
+using master::Master;
+using master::HelloReply;
+using master::HelloRequest;
 
 using namespace std;
 
-class GreeterClient {
+class MasterClient {
 public:
-  GreeterClient(std::shared_ptr<Channel> channel)
-      : stub_(Greeter::NewStub(channel)) {}
+  MasterClient(std::shared_ptr<Channel> channel)
+      : stub_(Master::NewStub(channel)) {}
 
   // Assembles the client's payload, sends it and presents the response back
   // from the server.
@@ -80,24 +81,24 @@ public:
   }
 
 private:
-  std::unique_ptr<Greeter::Stub> stub_;
+  std::unique_ptr<Master::Stub> stub_;
 };
 
-class GreeterServiceImpl final : public Greeter::Service {
-  Status SayHello(ServerContext *context, const HelloRequest *request,
-                  HelloReply *reply) override {
-    std::string prefix("Hello ");
-    reply->set_message(prefix + request->name());
-    return Status::OK;
-  }
+/* class GreeterServiceImpl final : public Greeter::Service { */
+/*   Status SayHello(ServerContext *context, const HelloRequest *request, */
+/*                   HelloReply *reply) override { */
+/*     std::string prefix("Hello "); */
+/*     reply->set_message(prefix + request->name()); */
+/*     return Status::OK; */
+/*   } */
 
-  Status SayHelloAgain(ServerContext *context, const HelloRequest *request,
-                       HelloReply *reply) override {
-    std::string prefix("Hello again ");
-    reply->set_message(prefix + request->name());
-    return Status::OK;
-  }
-};
+/*   Status SayHelloAgain(ServerContext *context, const HelloRequest *request, */
+/*                        HelloReply *reply) override { */
+/*     std::string prefix("Hello again "); */
+/*     reply->set_message(prefix + request->name()); */
+/*     return Status::OK; */
+/*   } */
+/* }; */
 
 // Print Current Time
 void print_time_point(std::chrono::system_clock::time_point timePoint) {
@@ -105,54 +106,54 @@ void print_time_point(std::chrono::system_clock::time_point timePoint) {
   std::cout << std::ctime(&timeStamp) << std::endl;
 }
 
-void RunServer() {
+/* void RunServer() { */
 
-  std::string client_ip = absl::GetFlag(FLAGS_self_ip);
-  std::string client_port = absl::GetFlag(FLAGS_self_port);
-  std::string client_address = client_ip + ":" + client_port;
-  std::cout << "Client's own address: " << client_address << std::endl;
+/*   std::string client_ip = absl::GetFlag(FLAGS_self_ip); */
+/*   std::string client_port = absl::GetFlag(FLAGS_self_port); */
+/*   std::string client_address = client_ip + ":" + client_port; */
+/*   std::cout << "Client's own address: " << client_address << std::endl; */
 
-  GreeterServiceImpl service;
+/*   GreeterServiceImpl service; */
 
-  ServerBuilder builder;
-  // Listen on the given address without any authentication mechanism.
-  builder.AddListeningPort(client_address, grpc::InsecureServerCredentials());
-  // Register "service" as the instance through which we'll communicate with
-  // clients. In this case it corresponds to an *synchronous* service.
-  builder.RegisterService(&service);
-  // Finally assemble the server.
-  std::unique_ptr<Server> server(builder.BuildAndStart());
-  std::cout << "Server listening on " << client_address << std::endl;
+/*   ServerBuilder builder; */
+/*   // Listen on the given address without any authentication mechanism. */
+/*   builder.AddListeningPort(client_address, grpc::InsecureServerCredentials()); */
+/*   // Register "service" as the instance through which we'll communicate with */
+/*   // clients. In this case it corresponds to an *synchronous* service. */
+/*   builder.RegisterService(&service); */
+/*   // Finally assemble the server. */
+/*   std::unique_ptr<Server> server(builder.BuildAndStart()); */
+/*   std::cout << "Server listening on " << client_address << std::endl; */
 
-  // Wait for the server to shutdown. Note that some other thread must be
-  // responsible for shutting down the server for this call to ever return.
-  server->Wait();
-}
+/*   // Wait for the server to shutdown. Note that some other thread must be */
+/*   // responsible for shutting down the server for this call to ever return. */
+/*   server->Wait(); */
+/* } */
 
 void RunClient() {
-  std::cout << "Running the client" << std::endl;
+  std::cout << "Running the chunkserver client" << std::endl;
   std::string server_ip = absl::GetFlag(FLAGS_master_ip);
   std::string server_port = absl::GetFlag(FLAGS_master_port);
   std::string server_address = server_ip + ":" + server_port;
-  std::cout << "Client querying server address: " << server_address
+  std::cout << "Chunkserver client querying server address: " << server_address
             << std::endl;
 
   // Instantiate the client. It requires a channel, out of which the actual RPCs
   // are created. This channel models a connection to an endpoint (in this case,
   // localhost at port 50051). We indicate that the channel isn't authenticated
   // (use of InsecureChannelCredentials()).
-  GreeterClient greeter(
+  MasterClient masterclient(
       grpc::CreateChannel(server_address, grpc::InsecureChannelCredentials()));
   std::string user("world");
 
   // Run the "client"
   while(true) {
-    std::string reply = greeter.SayHello(user);
-    std::cout << "Greeter received: " << reply << std::endl;
+    std::string reply = masterclient.SayHello(user);
+    std::cout << "MasterClient received: " << reply << std::endl;
 
     // create a time point pointing to 1 second in future
     std::chrono::system_clock::time_point timePoint =
-        std::chrono::system_clock::now() + std::chrono::seconds(3);
+        std::chrono::system_clock::now() + std::chrono::seconds(1);
     std::cout << "Going to Sleep Until :: ";
     print_time_point(timePoint);
     // Sleep Till specified time point
@@ -172,14 +173,14 @@ int main(int argc, char **argv) {
   /* print_time_point(std::chrono::system_clock::now()); */
 
   // Begin the server in a separate thread
-  std::thread th(&RunServer);
+  /* std::thread th(&RunServer); */
 
   // Begin the client
   RunClient();
 
   // Wait for the server to exit
   std::cout << "Waiting for the server to exit" << std::endl;
-  th.join();
+  /* th.join(); */
 
   return 0;
 }
