@@ -5,6 +5,8 @@ cc_binary(
     name = "chunkserver",
     srcs = ["chunkserver.cc"],
     defines = ["BAZEL_BUILD"],
+    linkopts = ["-std=c++17"],
+    copts = ["-std=c++17"],
     deps = [
         "//src/protos/chunk_report:chunk_report_cc_grpc",
         "//src/protos/master:master_cc_grpc",

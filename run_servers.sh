@@ -19,6 +19,9 @@ for i in $(seq 1 $N_CHUNKSERVERS); do
 done
 
 docker container ls -a
+
+# Attach the master
+docker attach master
 # To view any instance, run "docker attach <name>" in a separate terminal
 
 # Start some greeters in the background, pinging each other

@@ -3,3 +3,4 @@ bazel-*
 *.bin
 *.out
 greeter_client
+docker/**

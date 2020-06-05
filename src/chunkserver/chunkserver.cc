@@ -138,17 +138,18 @@ void RunClient() {
   std::cout << "Chunkserver client querying server address: " << server_address
             << std::endl;
 
+  std::string self_ip = absl::GetFlag(FLAGS_self_ip);
+
   // Instantiate the client. It requires a channel, out of which the actual RPCs
   // are created. This channel models a connection to an endpoint (in this case,
   // localhost at port 50051). We indicate that the channel isn't authenticated
   // (use of InsecureChannelCredentials()).
   MasterClient masterclient(
       grpc::CreateChannel(server_address, grpc::InsecureChannelCredentials()));
-  std::string user("world");
 
   // Run the "client"
   while(true) {
-    std::string reply = masterclient.SayHello(user);
+    std::string reply = masterclient.SayHello(self_ip);
     std::cout << "MasterClient received: " << reply << std::endl;
 
     // create a time point pointing to 1 second in future

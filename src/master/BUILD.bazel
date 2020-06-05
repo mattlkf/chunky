@@ -6,6 +6,8 @@ cc_library(
     name = "master_track_chunkservers",
     srcs = ["master_track_chunkservers.cc"],
     hdrs = ["master_track_chunkservers.h"],
+    linkopts = ["-std=c++17"],
+    copts = ["-std=c++17"],
     deps = [
     ],
 )

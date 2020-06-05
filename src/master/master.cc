@@ -24,16 +24,13 @@ void print_time_point(std::chrono::system_clock::time_point timePoint) {
   std::cout << std::ctime(&timeStamp) << std::endl;
 }
 
-void RunServer() {
+void RunServer(MasterTrackChunkservers* trackchunkservers) {
   std::string my_ip = absl::GetFlag(FLAGS_self_ip);
   std::string my_port = absl::GetFlag(FLAGS_self_port);
   std::string my_address = my_ip + ":" + my_port;
   std::cout << "Master's own address: " << my_address << std::endl;
 
-  // Create logic classes
-  MasterTrackChunkservers trackchunkservers;
-
-  MasterServiceImpl service(&trackchunkservers);
+  MasterServiceImpl service(trackchunkservers);
 
   ServerBuilder builder;
   // Listen on the given address without any authentication mechanism.
@@ -50,13 +47,29 @@ void RunServer() {
   server->Wait();
 }
 
+void PrintState(MasterTrackChunkservers *trackchunkservers) {
+  // Query the last-heard times of all chunkservers
+  while(true) {
+    std::cout << "Printing state" << std::endl;
+    /* trackchunkservers->show_last_heard(); */
+    trackchunkservers->show_master_state_view();
+    std::this_thread::sleep_for (std::chrono::milliseconds(100));
+  }
+}
+
 int main(int argc, char **argv) {
   absl::SetProgramUsageMessage("A master that receives messages from chunkservers");
   // Parse command line arguments
   absl::ParseCommandLine(argc, argv);
 
+  // Create logic classes
+  MasterTrackChunkservers trackchunkservers;
+
   // Begin the server in a separate thread
-  std::thread th(&RunServer);
+  std::thread th(&RunServer, &trackchunkservers);
+
+  // Begin the state printer in a separate thread
+  std::thread thread_state_print(&PrintState, &trackchunkservers);
 
   // Wait for the server to exit
   std::cout << "Waiting for the server to exit" << std::endl;
