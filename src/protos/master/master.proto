@@ -14,6 +14,8 @@
 
 syntax = "proto3";
 
+import "src/protos/common/common.proto";
+
 package master;
 
 // The greeting service definition.
@@ -23,17 +25,38 @@ service Master {
 
   // Sends another greeting
   rpc SayHelloAgain (HelloRequest) returns (HelloReply) {}
+
+  /* // Receive a heartbeat from chunkserver */
+  rpc SendHeartbeat (ChunkserverHeartbeat) returns (ChunkserverHeartbeatReply) {}
+
+  /* // Receive a list of chunks held by a chunkserver */
+  rpc SendChunkList (ChunkserverChunkList) returns (ChunkserverChunkListReply) {}
 }
 
-// The request message containing the user's name.
+// [Testing] The request message containing the user's name.
 message HelloRequest {
   string name = 1;
 }
 
-// The response message containing the greetings
+// [Testing] The response message containing the greetings
 message HelloReply {
   string message = 1;
 }
 
+// Message sent from chunkserver to master periodically
+message ChunkserverHeartbeat {
+  string chunkserver_name = 1;
+}
 
+// Reply from master. Master indicates if it needs chunkserver to send it the chunk list
+message ChunkserverHeartbeatReply {
+  bool update_needed = 1;
+}
 
+message ChunkserverChunkList {
+  string chunkserver_name = 1;
+  repeated common.Chunk chunks = 2;
+}
+
+message ChunkserverChunkListReply {
+}

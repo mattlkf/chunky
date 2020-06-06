@@ -1,6 +1,39 @@
 load("@com_github_grpc_grpc//bazel:cc_grpc_library.bzl", "cc_grpc_library")
 package(default_visibility = ["//visibility:public"])
 
+cc_library(
+    name = 'chunkserver_impl',
+    srcs = ['chunkserver_impl.cc'],
+    hdrs = ['chunkserver_impl.h'],
+    linkopts = ["-lstdc++fs"],
+    deps = [
+        "//src/protos/chunk_report:chunk_report_cc_grpc",
+        "//src/protos/master:master_cc_grpc",
+        "//src/common:types",
+        "@com_github_grpc_grpc//:grpc++",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/time",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/flags:parse",
+        "@com_google_protobuf//:protobuf_lite",
+        "@com_google_leveldb//:leveldb"
+    ],
+)
+
+cc_library(
+    name = "chunkserver_grpc",
+    srcs = ["chunkserver_grpc.cc"],
+    hdrs = ["chunkserver_grpc.h"],
+    deps = [
+        ":chunkserver_impl",
+        "//src/protos/master:master_cc_grpc",
+        "//src/protos/chunkserver:chunkserver_cc_grpc",
+        "@com_github_grpc_grpc//:grpc++",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/flags:parse",
+    ],
+)
+
 cc_binary(
     name = "chunkserver",
     srcs = ["chunkserver.cc"],
@@ -8,6 +41,7 @@ cc_binary(
     linkopts = ["-std=c++17"],
     copts = ["-std=c++17"],
     deps = [
+        ":chunkserver_impl",
         "//src/protos/chunk_report:chunk_report_cc_grpc",
         "//src/protos/master:master_cc_grpc",
         # http_archive made this label available for binding

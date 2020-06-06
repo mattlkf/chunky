@@ -9,6 +9,9 @@ package(default_visibility = ["//visibility:public"])
 proto_library(
     name = "master_proto",
     srcs = ["master.proto"],
+    deps = [
+        "//src/protos/common:common_proto",
+    ],
 )
 
 cc_proto_library(

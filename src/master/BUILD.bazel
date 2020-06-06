@@ -19,6 +19,7 @@ cc_library(
     deps = [
         ":master_track_chunkservers",
         "//src/protos/master:master_cc_grpc",
+        "//src/protos/chunkserver:chunkserver_cc_grpc",
         "@com_github_grpc_grpc//:grpc++",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/flags:parse",

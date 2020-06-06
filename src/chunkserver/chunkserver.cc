@@ -31,17 +31,20 @@
 #include "absl/flags/usage.h"
 #include "absl/flags/parse.h"
 
+#include "src/chunkserver/chunkserver_impl.h"
+
 ABSL_FLAG(std::string, master_ip, "0.0.0.0", "my ip");
 ABSL_FLAG(std::string, master_port, "50051", "master port");
 ABSL_FLAG(std::string, self_ip, "0.0.0.0", "my ip");
 ABSL_FLAG(std::string, self_port, "50052", "my port");
+ABSL_FLAG(int, chunk_size, 256, "chunk size in bytes");
+ABSL_FLAG(std::string, chunk_path, "/chunk_storage", "chunk storage path");
 
 using grpc::Channel;
 using grpc::ClientContext;
 using grpc::Server;
 using grpc::ServerBuilder;
 using grpc::ServerContext;
-using grpc::Status;
 using master::Master;
 using master::HelloReply;
 using master::HelloRequest;
@@ -68,7 +71,7 @@ public:
     ClientContext context;
 
     // The actual RPC.
-    Status status = stub_->SayHello(&context, request, &reply);
+    grpc::Status status = stub_->SayHello(&context, request, &reply);
 
     // Act upon its status.
     if (status.ok()) {
@@ -130,26 +133,19 @@ void print_time_point(std::chrono::system_clock::time_point timePoint) {
 /*   server->Wait(); */
 /* } */
 
-void RunClient() {
-  std::cout << "Running the chunkserver client" << std::endl;
-  std::string server_ip = absl::GetFlag(FLAGS_master_ip);
-  std::string server_port = absl::GetFlag(FLAGS_master_port);
-  std::string server_address = server_ip + ":" + server_port;
-  std::cout << "Chunkserver client querying server address: " << server_address
-            << std::endl;
+void RunClient(string master_address, string self_address) {
 
-  std::string self_ip = absl::GetFlag(FLAGS_self_ip);
 
   // Instantiate the client. It requires a channel, out of which the actual RPCs
   // are created. This channel models a connection to an endpoint (in this case,
   // localhost at port 50051). We indicate that the channel isn't authenticated
   // (use of InsecureChannelCredentials()).
   MasterClient masterclient(
-      grpc::CreateChannel(server_address, grpc::InsecureChannelCredentials()));
+      grpc::CreateChannel(master_address, grpc::InsecureChannelCredentials()));
 
   // Run the "client"
   while(true) {
-    std::string reply = masterclient.SayHello(self_ip);
+    std::string reply = masterclient.SayHello(self_address);
     std::cout << "MasterClient received: " << reply << std::endl;
 
     // create a time point pointing to 1 second in future
@@ -166,22 +162,54 @@ void RunClient() {
   }
 }
 
+void RunChunkServerClient(string master_address, string self_address) {
+  cout << "hi there" << endl;
+  // Instantiate the channel
+  auto channel = grpc::CreateChannel(master_address, grpc::InsecureChannelCredentials());
+  auto path = absl::GetFlag(FLAGS_chunk_path);
+  auto chunk_size = absl::GetFlag(FLAGS_chunk_size);
+
+  ChunkserverImpl chunkserver(channel, path, chunk_size);
+  HALT_IF_ERROR(chunkserver.start());
+
+  // [Testing] Allocate a chunk file
+  HALT_IF_ERROR(chunkserver.allocateChunk("test_chunk", 5));
+
+  // [Testing] Write a chunk file
+  string hello_str = "Hello World";
+  chunkserver.setData("test_chunk", 5, "client_a", {0, 11}, hello_str);
+  chunkserver.requestWrite("test_chunk", 5, "client_a");
+
+  // [Testing] Read a chunk file
+  auto ret = chunkserver.getChunkData("test_chunk", 5, {0, 11});
+  auto v = ret.ValueOrDie();
+  string s(v.begin(), v.end());
+  cout << "Read: [" << s << "]" << endl;
+}
+
 int main(int argc, char **argv) {
   absl::SetProgramUsageMessage("A chunkserver that updates the master periodically");
   // Parse command line arguments
   absl::ParseCommandLine(argc, argv);
 
-  /* print_time_point(std::chrono::system_clock::now()); */
+  cout << "Hello world!" << endl;
+
+  // Get the master address
+  std::string master_ip = absl::GetFlag(FLAGS_master_ip);
+  std::string master_port = absl::GetFlag(FLAGS_master_port);
+  std::string master_address = master_ip + ":" + master_port;
+  
+  std::string self_ip = absl::GetFlag(FLAGS_self_ip);
+  std::string self_port = absl::GetFlag(FLAGS_self_port);
+  std::string self_address = self_ip + ":" + self_port;
 
   // Begin the server in a separate thread
   /* std::thread th(&RunServer); */
 
   // Begin the client
-  RunClient();
+  /* RunClient(master_address, self_address); */
 
-  // Wait for the server to exit
-  std::cout << "Waiting for the server to exit" << std::endl;
-  /* th.join(); */
+  RunChunkServerClient(master_address, self_address);
 
   return 0;
 }

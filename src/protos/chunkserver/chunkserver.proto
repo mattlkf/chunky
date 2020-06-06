@@ -1,0 +1,78 @@
+// Copyright 2015 gRPC authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+import "src/protos/common/common.proto";
+
+package chunkserver;
+
+// The greeting service definition.
+service Chunkserver {
+  // Sends a greeting
+  rpc SayHello (HelloRequest) returns (HelloReply) {}
+
+  rpc AllocateChunk (AllocateChunkRequest) returns (AllocateChunkReply) {}
+
+  rpc SendChunkData (SendChunkDataRequest) returns (SendChunkDataReply) {}
+
+  rpc CommitChunkData (CommitChunkDataRequest) returns (CommitChunkDataReply) {}
+
+  rpc ReadChunkData (ReadChunkDataRequest) returns (ReadChunkDataReply) {}
+}
+
+// [Testing] The request message containing the user's name.
+message HelloRequest {
+  string name = 1;
+}
+
+// [Testing] The response message containing the greetings
+message HelloReply {
+  string message = 1;
+}
+
+message AllocateChunkRequest {
+  string chunk_handle = 1;
+}
+
+message AllocateChunkReply {
+}
+
+message SendChunkDataRequest {
+  string client_id = 1;
+  string chunk_handle = 2;
+  common.ByteRange range = 3;
+  bytes data = 4;
+}
+
+message SendChunkDataReply {
+}
+
+message CommitChunkDataRequest {
+  string client_id = 1;
+  string chunk_handle = 2;
+}
+
+message CommitChunkDataReply {
+}
+
+message ReadChunkDataRequest {
+  string chunk_handle = 1;
+  common.ByteRange range = 2;
+}
+
+message ReadChunkDataReply {
+  ReadChunkDataRequest request = 1;
+  bytes data = 2;
+}

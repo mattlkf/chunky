@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package common;
+
+message Chunk {
+  string ChunkID = 1;
+  // TODO: add more metadata
+}
+
+message ByteRange {
+  int32 start = 1;
+  int32 length = 2;
+}

@@ -1,0 +1,17 @@
+load("@com_github_grpc_grpc//bazel:cc_grpc_library.bzl", "cc_grpc_library")
+package(default_visibility = ["//visibility:public"])
+
+cc_library(
+    name = 'types',
+    # srcs = ['chunkserver_impl.cc'],
+    hdrs = ['types.h'],
+    # linkopts = ["-lstdc++fs"],
+    deps = [
+        # "@com_google_absl//absl/strings",
+        # "@com_google_absl//absl/time",
+        # "@com_google_absl//absl/flags:flag",
+        # "@com_google_absl//absl/flags:parse",
+        # "@com_google_protobuf//:protobuf_lite",
+        # "@com_google_leveldb//:leveldb"
+    ],
+)

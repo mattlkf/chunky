@@ -4,6 +4,7 @@
 #include <chrono>
 #include <map>
 #include <mutex>
+#include <set>
 
 using std::string;
 
@@ -24,6 +25,12 @@ private:
   std::mutex mtx;
   // Keep track of the last time we heard from each chunkserver
   std::map<std::string, std::chrono::system_clock::time_point> last_heard;
+
+  // Keep track of the chunk handles that each chunkserver has
+  std::map<std::string, std::set<std::string>> chunkserver_to_chunks;
+
+  // Keep track of the chunkservers that each chunk resides on
+  std::map<std::string, std::set<std::string>> chunk_to_chunkservers;
 };
 
 #endif
