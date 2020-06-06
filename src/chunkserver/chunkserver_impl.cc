@@ -64,8 +64,24 @@ Status ChunkserverImpl::start() {
   // TODO: Send the chunk handles to the master (via the communication mgr)
   // TODO: Start a "heartbeat sender" thread which periodically sends heartbeats
   // TODO: Basically at this point, when the chunkserver has been initialized, this function kicks off the heartbeat thread... which is also responsible for responding to the master's reply with the chunk list
+  
+  th = new std::thread(&ChunkserverImpl::sayHi, this);
 
   return Status::OK;
+}
+
+void ChunkserverImpl::join() {
+  cout << "Joining" << endl;
+  th->join();
+}
+
+void ChunkserverImpl::sayHi() {
+  while(true) {
+    cout << "Hi from chunkserver" << endl;
+
+    // Sleep for some number of seconds
+    std::this_thread::sleep_for (std::chrono::seconds(1));
+  }
 }
 
 StatusOr<vector<UUID>> ChunkserverImpl::getChunkHandles() {

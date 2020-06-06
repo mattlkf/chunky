@@ -97,6 +97,10 @@ public:
   StatusOr<vector<UUID>> getChunkHandles();
   StatusOr<vector<VersionNumber>> getVersionNumbers();
 
+  void sayHi();
+
+  void join();
+
   // Master: tells chunkserver to allocate a new chunk
   // Chunkserver: allocates a chunk in persistent storage
   Status allocateChunk(UUID, VersionNumber);
@@ -159,6 +163,9 @@ private:
   // Used to buffer writes from client before they are committed to storage
   map<pair<UUID, VersionNumber>, map<ClientId, vector<pair<ByteRange, Data>>>>
       buffered_data;
+
+  // Heartbeat thread
+  std::thread *th;
 
   Status openDatabase();
   Status loadChunkHandlesFromFileSystem();

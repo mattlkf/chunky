@@ -172,19 +172,23 @@ void RunChunkServerClient(string master_address, string self_address) {
   ChunkserverImpl chunkserver(channel, path, chunk_size);
   HALT_IF_ERROR(chunkserver.start());
 
-  // [Testing] Allocate a chunk file
-  HALT_IF_ERROR(chunkserver.allocateChunk("test_chunk", 5));
+  /* // [Testing] Allocate a chunk file */
+  /* HALT_IF_ERROR(chunkserver.allocateChunk("test_chunk", 5)); */
 
-  // [Testing] Write a chunk file
-  string hello_str = "Hello World";
-  chunkserver.setData("test_chunk", 5, "client_a", {0, 11}, hello_str);
-  chunkserver.requestWrite("test_chunk", 5, "client_a");
+  /* // [Testing] Write a chunk file */
+  /* string hello_str = "Hello World"; */
+  /* chunkserver.setData("test_chunk", 5, "client_a", {0, 11}, hello_str); */
+  /* chunkserver.requestWrite("test_chunk", 5, "client_a"); */
 
-  // [Testing] Read a chunk file
-  auto ret = chunkserver.getChunkData("test_chunk", 5, {0, 11});
-  auto v = ret.ValueOrDie();
-  string s(v.begin(), v.end());
-  cout << "Read: [" << s << "]" << endl;
+  /* // [Testing] Read a chunk file */
+  /* auto ret = chunkserver.getChunkData("test_chunk", 5, {0, 11}); */
+  /* auto v = ret.ValueOrDie(); */
+  /* string s(v.begin(), v.end()); */
+  /* cout << "Read: [" << s << "]" << endl; */
+
+  // Wait for the chunkserver thread to end (it doesn't)
+  cout << "Join?" << endl;
+  chunkserver.join();
 }
 
 int main(int argc, char **argv) {
@@ -192,7 +196,7 @@ int main(int argc, char **argv) {
   // Parse command line arguments
   absl::ParseCommandLine(argc, argv);
 
-  cout << "Hello world!" << endl;
+  cout << "Hello world!!!!!!" << endl;
 
   // Get the master address
   std::string master_ip = absl::GetFlag(FLAGS_master_ip);
