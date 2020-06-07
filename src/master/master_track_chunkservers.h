@@ -13,7 +13,8 @@ public:
   void hi();
 
   // Record that we heard a heartbeat from a chunkserver
-  void register_heartbeat(string ip);
+  // Returns true if it's the first time we've heard from this chunkserver
+  bool register_heartbeat(string chunkserver);
 
   // Print out the chunkserver last-heard times
   void show_last_heard();

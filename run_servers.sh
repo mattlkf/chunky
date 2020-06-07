@@ -7,10 +7,7 @@ N_CHUNKSERVERS=${1:-2}
 echo "Creating network"
 docker network create --driver bridge gfs-net
 
-# Launch in detached mode the images
-echo "Launching master"
-docker run -d --name master --network gfs-net master --self_ip master --self_port 50051
-
+# Launch in detached mode the chunkservers
 echo "Launching chunkservers"
 for i in $(seq 1 $N_CHUNKSERVERS); do
     cs_name="chunkserver$i"
@@ -19,10 +16,12 @@ for i in $(seq 1 $N_CHUNKSERVERS); do
     docker run -d --mount source=${volume_name},target=/chunk_storage --name $cs_name --network gfs-net chunkserver --self_ip $cs_name --master_ip master --master_port 50051
 done
 
-docker container ls -a
+# docker container ls -a
 
-# Attach the master
-docker attach master
+# Launch in attached mode the master
+echo "Launching master"
+docker run --name master --network gfs-net master --self_ip master --self_port 50051
+
 # To view any instance, run "docker attach <name>" in a separate terminal
 
 # Start some greeters in the background, pinging each other

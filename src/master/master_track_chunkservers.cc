@@ -5,10 +5,14 @@ void MasterTrackChunkservers::hi() {
   std::cout << "Hi from MasterTrackChunkservers" << std::endl;
 }
 
-void MasterTrackChunkservers::register_heartbeat(string ip) {
+bool MasterTrackChunkservers::register_heartbeat(string chunkserver) {
   mtx.lock();
-  last_heard[ip] = std::chrono::system_clock::now();
+  // found: true if chunkserver has been heard from before
+  std::cout << "Count: " << last_heard.count(chunkserver) << std::endl;
+  bool never_heard = (last_heard.count(chunkserver) == 0);
+  last_heard[chunkserver] = std::chrono::system_clock::now();
   mtx.unlock();
+  return never_heard;
 }
 
 void MasterTrackChunkservers::show_last_heard() {
