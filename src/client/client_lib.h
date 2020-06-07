@@ -74,15 +74,19 @@ using master::Master;
 using master::HelloReply;
 using master::HelloRequest;
 
+class ClientLib; // needed because these two classes are mutually recursive
+
 class ChunkyFile {
   public:
-    ChunkyFile(size_t chunk_size_bytes);
+    ChunkyFile(ClientLib *client_lib, size_t chunk_size_bytes, string fname);
     size_t read(ByteRange, Data&);
     Status write(ByteRange, Data);
     Status close();
 
   private:
+    ClientLib *client_lib;
     size_t chunk_size_bytes;
+    string fname;
 };
 
 class ClientLib {
@@ -91,6 +95,8 @@ public:
   Status start();
 
   ChunkyFile open(string fname);
+  Status get_chunkservers(string fname, size_t chunk_index);
+  string get_data(string fname, size_t chunk_index, ByteRange range);
 
 private:
   string master_address;
@@ -100,7 +106,7 @@ private:
   string client_id;
 
   // This is what we can use to send messages to the Master
-  std::unique_ptr<master::Master::Stub> stub_;
+  std::unique_ptr<master::Master::Stub> master_stub;
 
   // TODO: we actually need to maintain a few handles to the chunkservers...
   /* std::unique_ptr<chunkserver::chunkserver::Stub> stub_; */
