@@ -33,6 +33,7 @@
 
 // Threading
 #include <thread>
+#include <mutex>
 
 // For propagating errors when calling a function.
 #define RETURN_IF_ERROR(...)                                                   \
@@ -169,6 +170,9 @@ private:
   // Heartbeat thread
   std::thread *th;
 
+  // Mutex to synchronize accesses to set of chunk handles
+  std::mutex mut_chunk_set;
+
   Status openDatabase();
   Status loadChunkHandlesFromFileSystem();
   Status loadChunkHandlesFromDatabase();
@@ -177,6 +181,8 @@ private:
   Status validateRange(ByteRange);
   Status validateChunk(UUID, VersionNumber);
   Status commitBufferedWrites(UUID, VersionNumber, ClientId);
+
+  Status sendChunkList();
 };
 
 #endif  // GFS_SERVER_CHUNK_SERVER_H_

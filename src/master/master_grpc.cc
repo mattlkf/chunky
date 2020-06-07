@@ -3,6 +3,7 @@
 #include <memory>
 #include <string>
 #include <thread>
+#include <vector>
 
 #include <grpcpp/grpcpp.h>
 
@@ -69,6 +70,17 @@ Status MasterServiceImpl::SendChunkList(ServerContext *context,
                                         const ChunkserverChunkList *request,
                                         ChunkserverChunkListReply *reply) {
   cout << "Master received a SendChunkList request" << endl;
+  
+  vector<string> chunk_handles;
+  for (int i=0;i < request->chunks_size(); i++) {
+    cout << "Chunk handle " << ": " << request->chunks(i).chunkid() << endl;
+    chunk_handles.push_back(request->chunks(i).chunkid());
+  }
+
+  // Update the master's mappings from chunk handles -> chunk servers
+  // and vice versa
+
+  trackchunkservers->update_mappings(request->chunkserver_name(), chunk_handles);
   return Status::OK;
 }
 

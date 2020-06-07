@@ -20,8 +20,6 @@ package chunkserver;
 
 // The greeting service definition.
 service Chunkserver {
-  // Sends a greeting
-  rpc SayHello (HelloRequest) returns (HelloReply) {}
 
   rpc AllocateChunk (AllocateChunkRequest) returns (AllocateChunkReply) {}
 
@@ -32,47 +30,68 @@ service Chunkserver {
   rpc ReadChunkData (ReadChunkDataRequest) returns (ReadChunkDataReply) {}
 }
 
-// [Testing] The request message containing the user's name.
-message HelloRequest {
-  string name = 1;
-}
-
-// [Testing] The response message containing the greetings
-message HelloReply {
-  string message = 1;
-}
-
 message AllocateChunkRequest {
   string chunk_handle = 1;
 }
 
 message AllocateChunkReply {
+  enum AllocateChunkStatus {
+    OK = 0;
+    UNKNOWN = 1;
+    CONFLICT = 2;
+  }
+  AllocateChunkStatus status = 1;
 }
 
 message SendChunkDataRequest {
   string client_id = 1;
   string chunk_handle = 2;
-  common.ByteRange range = 3;
-  bytes data = 4;
+  int32 chunk_version =3;
+  common.ByteRange range = 4;
+  bytes data = 5;
 }
 
 message SendChunkDataReply {
+  enum SendChunkDataStatus {
+    OK = 0;
+    UNKNOWN = 1;
+    NOT_FOUND = 2;
+    INVALID_VERSION = 3;
+  }
+  SendChunkDataStatus status = 1;
 }
 
 message CommitChunkDataRequest {
   string client_id = 1;
   string chunk_handle = 2;
+  int32 chunk_version = 3;
 }
 
 message CommitChunkDataReply {
+  enum CommitChunkDataStatus {
+    OK = 0;
+    UNKNOWN = 1;
+    NOT_FOUND = 2;
+    INVALID_VERSION = 3;
+  }
+  CommitChunkDataStatus status = 1;
 }
 
 message ReadChunkDataRequest {
   string chunk_handle = 1;
   common.ByteRange range = 2;
+  int32 chunk_version = 3;
 }
 
 message ReadChunkDataReply {
   ReadChunkDataRequest request = 1;
   bytes data = 2;
+  int32 bytes_read = 3;
+  enum ReadChunkDataStatus {
+    OK = 0;
+    UNKNOWN = 1;
+    NOT_FOUND = 2;
+    INVALID_VERSION = 3;
+  }
+  ReadChunkDataStatus status = 4;
 }

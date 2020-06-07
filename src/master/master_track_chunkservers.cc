@@ -42,3 +42,20 @@ void MasterTrackChunkservers::show_master_state_view() {
   }
   mtx.unlock();
 }
+
+void MasterTrackChunkservers::update_mappings(string chunkserver, std::vector<string> chunk_handles) {
+  mut_chunk_maps.lock();
+  // The new mapping is taken as authoritative so we first invalidate the old mappings
+  for (string handle : chunkserver_to_chunks[chunkserver]) {
+    chunk_to_chunkservers[handle].erase(chunkserver);
+  }
+  chunkserver_to_chunks[chunkserver].clear();
+
+  // Use the new mapping
+  for (string handle : chunk_handles) {
+    chunkserver_to_chunks[chunkserver].insert(handle);
+    chunk_to_chunkservers[handle].insert(chunkserver);
+  }
+  mut_chunk_maps.unlock();
+  return;
+}

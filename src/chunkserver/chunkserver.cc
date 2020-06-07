@@ -180,11 +180,10 @@ void RunChunkServerClient(string master_address, string self_address) {
   /* chunkserver.setData("test_chunk", 5, "client_a", {0, 11}, hello_str); */
   /* chunkserver.requestWrite("test_chunk", 5, "client_a"); */
 
-  /* // [Testing] Read a chunk file */
-  /* auto ret = chunkserver.getChunkData("test_chunk", 5, {0, 11}); */
-  /* auto v = ret.ValueOrDie(); */
-  /* string s(v.begin(), v.end()); */
-  /* cout << "Read: [" << s << "]" << endl; */
+  // [Testing] Read a chunk file
+  auto ret = chunkserver.getChunkData("test_chunk", 5, {0, 11});
+  auto s = ret.ValueOrDie();
+  cout << "Read: [" << s << "]" << endl;
 
   // Wait for the chunkserver thread to end (it doesn't)
   cout << "Join?" << endl;

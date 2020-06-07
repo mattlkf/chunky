@@ -46,6 +46,8 @@ Status ChunkserverImpl::openDatabase() {
 
 // Call this before anything else
 Status ChunkserverImpl::start() {
+  // Sleep for some number of seconds (DEBUGGING)
+  std::this_thread::sleep_for (std::chrono::seconds(3));
   cout << "Starting" << endl;
 
   // Return an error if the storage directory doesn't exist
@@ -77,6 +79,7 @@ Status ChunkserverImpl::join() {
 }
 
 Status ChunkserverImpl::sendHeartbeats() {
+  bool first_contact_with_master = true;
   while(true) {
     cout << "Hi from chunkserver" << endl;
 
@@ -96,11 +99,47 @@ Status ChunkserverImpl::sendHeartbeats() {
     }
     else {
       cout << status.error_code() << ": " << status.error_message() << endl;
+      // Sleep for some number of seconds
+      std::this_thread::sleep_for (std::chrono::seconds(1));
+      continue;
+
     }
+
+    // If the master requests it, or if this is our first time contacting master, send chunk list
+    bool send_chunk_list = (status.ok() && reply.update_needed()) || first_contact_with_master;
+
+    if (send_chunk_list) {
+      sendChunkList();
+    }
+
+    first_contact_with_master = false; // subsequent iters are not the first
 
     // Sleep for some number of seconds
     std::this_thread::sleep_for (std::chrono::seconds(1));
   }
+  return Status::OK;
+}
+
+Status ChunkserverImpl::sendChunkList() {
+  // Take a lock on our chunk list
+  mut_chunk_set.lock();
+  
+  master::ChunkserverChunkList request;
+  request.set_chunkserver_name(self_address);
+
+  for (UUID handle : chunk_handles) {
+    cout << "I have handle: " << handle << endl;
+    common::Chunk *chunk = request.add_chunks();
+    chunk->set_chunkid(handle);
+  }
+
+  master::ChunkserverChunkListReply reply;
+  grpc::ClientContext context;
+
+  cout << "Sending the chunk list..." << endl;
+  grpc::Status status = stub_->SendChunkList(&context, request, &reply);
+
+  mut_chunk_set.unlock();
   return Status::OK;
 }
 

@@ -8,6 +8,6 @@ message Chunk {
 }
 
 message ByteRange {
-  int32 start = 1;
-  int32 length = 2;
+  uint32 start = 1;
+  uint32 length = 2;
 }
