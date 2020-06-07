@@ -169,7 +169,7 @@ void RunChunkServerClient(string master_address, string self_address) {
   auto path = absl::GetFlag(FLAGS_chunk_path);
   auto chunk_size = absl::GetFlag(FLAGS_chunk_size);
 
-  ChunkserverImpl chunkserver(channel, path, chunk_size);
+  ChunkserverImpl chunkserver(channel, self_address, path, chunk_size);
   HALT_IF_ERROR(chunkserver.start());
 
   /* // [Testing] Allocate a chunk file */

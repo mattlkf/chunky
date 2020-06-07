@@ -92,14 +92,14 @@ using master::HelloRequest;
 
 class ChunkserverImpl {
 public:
-  ChunkserverImpl(std::shared_ptr<Channel> channel, fs::path path, size_t chunk_size_bytes);
+  ChunkserverImpl(std::shared_ptr<Channel> channel, string self_address, fs::path path, size_t chunk_size_bytes);
   Status start();
   StatusOr<vector<UUID>> getChunkHandles();
   StatusOr<vector<VersionNumber>> getVersionNumbers();
 
-  void sayHi();
+  Status sendHeartbeats();
 
-  void join();
+  Status join();
 
   // Master: tells chunkserver to allocate a new chunk
   // Chunkserver: allocates a chunk in persistent storage
@@ -151,6 +151,8 @@ public:
 private:
   // This is what we can use to send messages to the Master
   std::unique_ptr<master::Master::Stub> stub_;
+
+  string self_address;
 
   fs::path path;
   size_t chunk_size_bytes;

@@ -4,3 +4,4 @@ bazel-*
 *.out
 greeter_client
 docker/**
+*.swo

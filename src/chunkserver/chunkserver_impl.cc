@@ -2,8 +2,8 @@
 
 namespace fs = std::experimental::filesystem;
 
-ChunkserverImpl::ChunkserverImpl(std::shared_ptr<Channel> channel, fs::path path, size_t chunk_size_bytes)
-    : stub_(master::Master::NewStub(channel)), path(path), chunk_size_bytes(chunk_size_bytes) {}
+ChunkserverImpl::ChunkserverImpl(std::shared_ptr<Channel> channel, string self_address, fs::path path, size_t chunk_size_bytes)
+    : stub_(master::Master::NewStub(channel)), self_address(self_address), path(path), chunk_size_bytes(chunk_size_bytes) {}
 
 Status ChunkserverImpl::loadChunkHandlesFromDatabase() {
   cout << "Loading chunk handles from database" << endl;
@@ -65,23 +65,37 @@ Status ChunkserverImpl::start() {
   // TODO: Start a "heartbeat sender" thread which periodically sends heartbeats
   // TODO: Basically at this point, when the chunkserver has been initialized, this function kicks off the heartbeat thread... which is also responsible for responding to the master's reply with the chunk list
   
-  th = new std::thread(&ChunkserverImpl::sayHi, this);
+  th = new std::thread(&ChunkserverImpl::sendHeartbeats, this);
 
   return Status::OK;
 }
 
-void ChunkserverImpl::join() {
+Status ChunkserverImpl::join() {
   cout << "Joining" << endl;
   th->join();
+  return Status::OK;
 }
 
-void ChunkserverImpl::sayHi() {
+Status ChunkserverImpl::sendHeartbeats() {
   while(true) {
     cout << "Hi from chunkserver" << endl;
+
+    master::ChunkserverHeartbeat request;
+
+    request.set_chunkserver_name(self_address);
+
+    master::ChunkserverHeartbeatReply reply;
+    grpc::ClientContext context;
+    grpc::Status status = stub_->SendHeartbeat(&context, request, &reply);
+
+    if (status.ok()) {
+      cout << "OK: " << (reply.update_needed() ? "Update needed" : "No update needed") << endl;
+    }
 
     // Sleep for some number of seconds
     std::this_thread::sleep_for (std::chrono::seconds(1));
   }
+  return Status::OK;
 }
 
 StatusOr<vector<UUID>> ChunkserverImpl::getChunkHandles() {
