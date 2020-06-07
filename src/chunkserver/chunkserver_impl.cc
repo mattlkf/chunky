@@ -86,10 +86,16 @@ Status ChunkserverImpl::sendHeartbeats() {
 
     master::ChunkserverHeartbeatReply reply;
     grpc::ClientContext context;
+
+    cout << "Sending heartbeat..." << endl;
     grpc::Status status = stub_->SendHeartbeat(&context, request, &reply);
+    cout << "Sent heartbeat" << endl;
 
     if (status.ok()) {
       cout << "OK: " << (reply.update_needed() ? "Update needed" : "No update needed") << endl;
+    }
+    else {
+      cout << status.error_code() << ": " << status.error_message() << endl;
     }
 
     // Sleep for some number of seconds

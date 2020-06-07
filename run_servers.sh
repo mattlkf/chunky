@@ -15,7 +15,8 @@ echo "Launching chunkservers"
 for i in $(seq 1 $N_CHUNKSERVERS); do
     cs_name="chunkserver$i"
     echo "Name: $cs_name"
-    docker run -d --restart always --name $cs_name --network gfs-net chunkserver --self_ip $cs_name --master_ip master --master_port 50051
+    volume_name="vol_$i"
+    docker run -d --mount source=${volume_name},target=/chunk_storage --name $cs_name --network gfs-net chunkserver --self_ip $cs_name --master_ip master --master_port 50051
 done
 
 docker container ls -a
