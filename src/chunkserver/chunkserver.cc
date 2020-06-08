@@ -32,6 +32,7 @@
 #include "absl/flags/parse.h"
 
 #include "src/chunkserver/chunkserver_impl.h"
+#include "src/chunkserver/chunkserver_grpc.h"
 
 ABSL_FLAG(std::string, master_ip, "0.0.0.0", "my ip");
 ABSL_FLAG(std::string, master_port, "50051", "master port");
@@ -129,7 +130,18 @@ void RunChunkServerClient(string master_address, string self_address) {
   auto chunk_size = absl::GetFlag(FLAGS_chunk_size);
 
   ChunkserverImpl chunkserver(channel, self_address, path, chunk_size);
+  // This only starts the heartbeats
   HALT_IF_ERROR(chunkserver.start());
+
+  // Run our own service...
+  ChunkserverServiceImpl service(&chunkserver);
+  ServerBuilder builder;
+  builder.AddListeningPort(self_address, grpc::InsecureServerCredentials());
+  builder.RegisterService(&service);
+
+  std::unique_ptr<Server> server(builder.BuildAndStart());
+  std::cout << "Chunkserver listening on " << self_address << std::endl;
+  server->Wait();
 
   /* // [Testing] Allocate a chunk file */
   /* HALT_IF_ERROR(chunkserver.allocateChunk("test_chunk", 5)); */
@@ -164,9 +176,6 @@ int main(int argc, char **argv) {
   std::string self_ip = absl::GetFlag(FLAGS_self_ip);
   std::string self_port = absl::GetFlag(FLAGS_self_port);
   std::string self_address = self_ip + ":" + self_port;
-
-  // Begin the client
-  /* RunClient(master_address, self_address); */
 
   RunChunkServerClient(master_address, self_address);
 

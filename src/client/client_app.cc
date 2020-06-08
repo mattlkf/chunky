@@ -51,6 +51,8 @@ int main(int argc, char **argv) {
   // Open a file
   ChunkyFile f = Chunky.open("test.txt");
 
+  // Allocate..
+  f.reserve(256);
   // Read from the file
   /* Data s; */
   /* size_t bytes_read = f.read({0,5}, s); */

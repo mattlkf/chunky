@@ -30,6 +30,7 @@
 // gRPC
 #include <grpcpp/grpcpp.h>
 #include "src/protos/master/master.grpc.pb.h"
+#include "src/protos/chunkserver/chunkserver.grpc.pb.h"
 
 // Threading
 #include <thread>

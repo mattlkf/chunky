@@ -90,7 +90,7 @@ grpc::Status MasterServiceImpl::SendChunkList(ServerContext *context,
 grpc::Status MasterServiceImpl::AllocateChunk(ServerContext *context,
                                         const ClientAllocateChunk *request,
                                         ClientAllocateChunkReply *reply) {
-  cout << "Master received a ClientAllocateChunk request" << endl;
+  cout << "MasterServiceImpl::Allocate -- Master received a ClientAllocateChunk request" << endl;
   trackchunkservers->allocate(request->file_name(), request->n_chunks());
   return grpc::Status::OK;
 }

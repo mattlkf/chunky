@@ -11,7 +11,9 @@ ChunkyFile::ChunkyFile(ClientLib *client_lib, size_t chunk_size_bytes,
     : client_lib(client_lib), chunk_size_bytes(chunk_size_bytes), fname(fname) {}
 
 Status ChunkyFile::reserve(size_t bytes) {
-  return client_lib->allocate(fname, (bytes + chunk_size_bytes - 1) / chunk_size_bytes);
+  size_t n_chunks = (bytes + chunk_size_bytes - 1) / chunk_size_bytes;
+  cout << "ChunkyFile::reserve -- With a chunk size of " << chunk_size_bytes << " we reserve " << n_chunks << " for " << bytes << " bytes" << endl;
+  return client_lib->allocate(fname, n_chunks); 
 }
 
 size_t ChunkyFile::read(ByteRange range, Data &data) {
@@ -103,6 +105,7 @@ vector<string> ClientLib::get_chunkservers(string fname, size_t chunk_index, str
 }
 
 Status ClientLib::allocate(string fname, size_t n_chunks) {
+  cout << "Inside ClientLib::allocate" << endl;
   master::ClientAllocateChunk request;
   request.set_client_name(client_id);
   request.set_file_name(fname);

@@ -47,7 +47,7 @@ Status ChunkserverImpl::openDatabase() {
 // Call this before anything else
 Status ChunkserverImpl::start() {
   // Sleep for some number of seconds (DEBUGGING)
-  std::this_thread::sleep_for (std::chrono::seconds(3));
+  std::this_thread::sleep_for (std::chrono::seconds(6));
   cout << "Starting" << endl;
 
   // Return an error if the storage directory doesn't exist
@@ -63,10 +63,6 @@ Status ChunkserverImpl::start() {
 
   // Report to master the list of chunk handles and their version numbers
   // GFS paper, section 4.5
-  // TODO: Send the chunk handles to the master (via the communication mgr)
-  // TODO: Start a "heartbeat sender" thread which periodically sends heartbeats
-  // TODO: Basically at this point, when the chunkserver has been initialized, this function kicks off the heartbeat thread... which is also responsible for responding to the master's reply with the chunk list
-  
   th = new std::thread(&ChunkserverImpl::sendHeartbeats, this);
 
   return Status::OK;

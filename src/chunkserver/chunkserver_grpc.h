@@ -1,3 +1,6 @@
+#ifndef GFS_SERVER_CHUNK_SERVER_SERVICE_H_
+#define GFS_SERVER_CHUNK_SERVER_SERVICE_H_
+
 #include <grpcpp/grpcpp.h>
 
 #include "src/chunkserver/chunkserver_impl.h"
@@ -48,3 +51,5 @@ public:
 private:
   ChunkserverImpl *chunkserver_impl;
 };
+
+#endif

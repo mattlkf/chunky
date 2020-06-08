@@ -94,6 +94,7 @@ MasterTrackChunkservers::request_allocate_chunk(string chunkserver,
 }
 
 void MasterTrackChunkservers::allocate(string fname, int n_chunks) {
+  std::cout << "Inside MasterTrackChunkservers::allocate -- fname " << fname << ", n_chunks " << n_chunks << std::endl;
 
   for (int i = 0; i < n_chunks; i++) {
     //  1) generate a random chunk ID

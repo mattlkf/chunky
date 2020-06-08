@@ -9,6 +9,7 @@ cc_library(
     deps = [
         "//src/protos/chunk_report:chunk_report_cc_grpc",
         "//src/protos/master:master_cc_grpc",
+        "//src/protos/chunkserver:chunkserver_cc_grpc",
         "//src/common:types",
         "@com_github_grpc_grpc//:grpc++",
         "@com_google_absl//absl/strings",
@@ -42,8 +43,10 @@ cc_binary(
     copts = ["-std=c++17"],
     deps = [
         ":chunkserver_impl",
+        ":chunkserver_grpc",
         "//src/protos/chunk_report:chunk_report_cc_grpc",
         "//src/protos/master:master_cc_grpc",
+        "//src/protos/chunkserver:chunkserver_cc_grpc",
         "@com_github_grpc_grpc//:grpc++",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/flags:parse",
