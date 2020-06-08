@@ -9,6 +9,9 @@ cc_library(
     linkopts = ["-std=c++17"],
     copts = ["-std=c++17"],
     deps = [
+        "//src/protos/master:master_cc_grpc",
+        "//src/protos/chunkserver:chunkserver_cc_grpc",
+        "@com_github_grpc_grpc//:grpc++",
     ],
 )
 

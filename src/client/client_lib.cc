@@ -80,7 +80,31 @@ Status ClientLib::connect_to_chunkservers(vector<string> chunkservers) {
 
 StatusOr<string> ClientLib::get_data_from_chunkserver(string chunkserver, string chunk_handle, ByteRange range) {
   string str;
-  return str;
+  
+  chunkserver::ReadChunkDataRequest request;
+  request.set_chunk_handle(chunk_handle);
+
+  common::ByteRange *br = request.mutable_range();
+  br->set_start(range.offset);
+  br->set_length(range.nbytes);
+
+  // Unused..
+  request.set_chunk_version(0);
+
+  chunkserver::ReadChunkDataReply reply;
+  grpc::ClientContext context;
+
+  cout << "Client is querying a chunkserver for data" << endl;
+  auto status = chunkserver_stubs[chunkserver]->ReadChunkData(&context, request, &reply);
+
+  if (status.ok()) {
+    cout << "Success! Got data from a chunkserver" << std::endl;
+    return reply.data();
+  }
+  else {
+    cout << "Not a success - client failed to get data from a chunkserver" << endl;
+    return Status::UNKNOWN;
+  }
 }
 
 string ClientLib::get_data(string fname, size_t chunk_index, ByteRange range) {

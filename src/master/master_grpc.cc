@@ -61,6 +61,11 @@ Status MasterServiceImpl::SendHeartbeat(ServerContext *context,
   // Record the heartbeat (also checks if master heard this chunkserver before)
   bool never_heard = trackchunkservers->register_heartbeat(cs_name);
 
+  // If this is the first time, initialize a reverse-channel to this chunkserver
+  if (never_heard) {
+    trackchunkservers->store_reverse_channel(cs_name);
+  }
+
   // If the master has not heard this chunkserver before, it needs chunk list
   reply->set_update_needed(never_heard);
   return Status::OK;
@@ -95,6 +100,14 @@ Status MasterServiceImpl::ReadChunk(ServerContext *context,
                                     const ClientReadChunk *request,
                                     ClientReadChunkReply *reply) {
   cout << "Master received a ClientReadChunk request" << endl;
+
+  // TODO: compute the chunk handle for this file,chunk index tuple
+  // TODO: return the list of chunk servers that have this handle
+  
+  string chunk_handle = trackchunkservers->get_chunk_handle(request->file_name(), request->chunk_index());
+
+  reply->set_chunk_handle(chunk_handle);
+
   return Status::OK;
 }
 
