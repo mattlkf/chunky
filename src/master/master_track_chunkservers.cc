@@ -40,7 +40,7 @@ bool MasterTrackChunkservers::register_heartbeat(string chunkserver) {
     // Registering heartbeat: need exclusive lock
     std::unique_lock lock(last_heard_mutex);
     // found: true if chunkserver has been heard from before
-    std::cout << "Count: " << last_heard.count(chunkserver) << std::endl;
+    /* std::cout << "Count: " << last_heard.count(chunkserver) << std::endl; */
     never_heard = (last_heard.count(chunkserver) == 0);
     last_heard[chunkserver] = std::chrono::system_clock::now();
   }
@@ -74,8 +74,7 @@ StatusOr<string> MasterTrackChunkservers::get_chunk_handle(string fname,
   return Status(Code::NOT_FOUND, "Chunk index does not exist");
 }
 
-grpc::Status
-MasterTrackChunkservers::request_allocate_chunk(string chunkserver,
+grpc::Status MasterTrackChunkservers::request_allocate_chunk(string chunkserver,
                                                 string chunk_handle) {
   std::shared_lock lock(chunkserver_stubs_mutex);
 
@@ -96,12 +95,21 @@ MasterTrackChunkservers::request_allocate_chunk(string chunkserver,
   return status;
 }
 
-void MasterTrackChunkservers::allocate(string fname, int n_chunks) {
+Status MasterTrackChunkservers::allocate(string fname, int n_chunks) {
   std::cout << "Inside MasterTrackChunkservers::allocate -- fname " << fname << ", n_chunks " << n_chunks << std::endl;
+
+  // Don't allow double-allocation
+  {
+    std::shared_lock lock(chunk_handles_mutex);
+    if (file_chunk_handles[fname].size() > 0) {
+      return Status(Code::UNKNOWN, "File " + fname + " was previously allocated");
+    }
+  }
 
   for (int i = 0; i < n_chunks; i++) {
     //  1) generate a random chunk ID
     string chunk_handle = "chunk_" + random_string(8);
+
     //  2) select K = min(n_replicas, #active chunkservers) chunkservers to
     //  allocate the chunk on
     std::set<string> chosen_chunkservers;
@@ -136,7 +144,16 @@ void MasterTrackChunkservers::allocate(string fname, int n_chunks) {
         chunkserver_to_chunks[chunkserver].insert(chunk_handle);
       }
     }
+
+    //  5) record this in our mapping for future lookup
+    {
+      std::unique_lock lock(chunk_maps_mutex);
+      file_chunk_handles[fname].push_back(chunk_handle);
+    }
+
   }
+
+  return Status::OK;
 }
 
 vector<string> MasterTrackChunkservers::get_chunkservers(string chunk_handle) {

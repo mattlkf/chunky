@@ -76,8 +76,9 @@ Status ChunkserverImpl::join() {
 
 Status ChunkserverImpl::sendHeartbeats() {
   bool first_contact_with_master = true;
+  int heartbeat_idx = 0;
   while(true) {
-    cout << "Hi from chunkserver" << endl;
+    /* cout << "Hi from chunkserver" << endl; */
 
     master::ChunkserverHeartbeat request;
 
@@ -86,9 +87,9 @@ Status ChunkserverImpl::sendHeartbeats() {
     master::ChunkserverHeartbeatReply reply;
     grpc::ClientContext context;
 
-    cout << "Sending heartbeat..." << endl;
+    /* cout << "Sending heartbeat..." << endl; */
     grpc::Status status = stub_->SendHeartbeat(&context, request, &reply);
-    cout << "Sent heartbeat" << endl;
+    cout << "Sent heartbeat " << heartbeat_idx++ << " - ";
 
     if (status.ok()) {
       cout << "OK: " << (reply.update_needed() ? "Update needed" : "No update needed") << endl;

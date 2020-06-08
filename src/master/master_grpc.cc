@@ -53,7 +53,7 @@ grpc::Status MasterServiceImpl::SayHelloAgain(ServerContext *context,
 grpc::Status MasterServiceImpl::SendHeartbeat(ServerContext *context,
                                         const ChunkserverHeartbeat *request,
                                         ChunkserverHeartbeatReply *reply) {
-  cout << "Master received a SendHeartbeat request" << endl;
+  /* cout << "Master received a SendHeartbeat request" << endl; */
   string cs_name = request->chunkserver_name();
 
   // Record the heartbeat (also checks if master heard this chunkserver before)
@@ -91,8 +91,13 @@ grpc::Status MasterServiceImpl::AllocateChunk(ServerContext *context,
                                         const ClientAllocateChunk *request,
                                         ClientAllocateChunkReply *reply) {
   cout << "MasterServiceImpl::Allocate -- Master received a ClientAllocateChunk request" << endl;
-  trackchunkservers->allocate(request->file_name(), request->n_chunks());
-  return grpc::Status::OK;
+  auto status = trackchunkservers->allocate(request->file_name(), request->n_chunks());
+  if(status.ok()) {
+    return grpc::Status::OK;
+  }
+  else {
+    return grpc::Status(grpc::StatusCode::UNKNOWN, status.ToString());
+  }
 }
 
 grpc::Status MasterServiceImpl::ReadChunk(ServerContext *context,

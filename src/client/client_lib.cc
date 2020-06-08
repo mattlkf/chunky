@@ -47,6 +47,7 @@ size_t ChunkyFile::read(ByteRange range, Data &data) {
 }
 
 Status ChunkyFile::write(ByteRange range, Data data) { 
+  cout << "ChunkyFile::write " << range.offset << " " << range.nbytes << endl;
 
   // For each chunk in the range, get the chunkservers for it...
   size_t start_byte = range.offset;
@@ -192,9 +193,14 @@ StatusOr<string> ClientLib::get_data(string fname, size_t chunk_index, ByteRange
 }
 
 Status ClientLib::send_data(string fname, size_t chunk_index, ByteRange range, string data) {
+  cout << "ClientLib::send_data " << fname << " " << range.offset << " " << range.nbytes << endl;
   string chunk_handle;
   // Get the list of chunkservers from the master
   vector<string> chunkservers = get_chunkservers(fname, chunk_index, chunk_handle);
+
+  cout << "Got chunkservers: ";
+  for (string cs : chunkservers) cout << cs << " ";
+  cout << endl;
 
   // Establish a connection to any chunkservers that have not yet been connected to
   connect_to_chunkservers(chunkservers);
@@ -217,20 +223,29 @@ Status ClientLib::send_data(string fname, size_t chunk_index, ByteRange range, s
   for (string chunkserver : chunkservers) {
     chunkserver::SendChunkDataReply reply;
     grpc::ClientContext context;
-    cout << "Client is sending data to chunkserver" << endl;
+    cout << "Client is sending data to " << chunkserver << endl;
 
     auto send_status = chunkserver_stubs[chunkserver]->SendChunkData(&context, request, &reply);
 
+    cout << "Client sent data" << endl;
+
     if (!send_status.ok()) {
+      cout << "Status was not OK: " << send_status.error_message() << endl;
       continue;
     }
     chunkserver::CommitChunkDataReply commit_reply;
     grpc::ClientContext commit_context;
 
+    cout << "Client is now committing data" << endl;
     auto commit_status = chunkserver_stubs[chunkserver]->CommitChunkData(&commit_context, commit_request, &commit_reply);
+    cout << "Sent commit" << endl;
     
     if (commit_status.ok()) {
+      cout << "Commit worked" << endl;
       at_least_one_worked = true;
+    }
+    else {
+      cout << "Commit failed" << endl;
     }
   }
 

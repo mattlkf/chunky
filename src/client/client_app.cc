@@ -53,6 +53,9 @@ int main(int argc, char **argv) {
 
   // Allocate..
   f.reserve(256);
+
+  // Write a little to the file...
+  f.write({0,7}, "cs244b!");
   // Read from the file
   /* Data s; */
   /* size_t bytes_read = f.read({0,5}, s); */

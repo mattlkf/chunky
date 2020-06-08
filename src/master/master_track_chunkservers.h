@@ -55,7 +55,7 @@ public:
   vector<string> get_chunkservers(string chunk_handle);
 
   // Allocate a file of a given number of chunks..
-  void allocate(string fname, int n_chunks);
+  Status allocate(string fname, int n_chunks);
 
   // Ask a particular chunkserver to allocate a particular chunk handle
   grpc::Status request_allocate_chunk(string chunkserver, string chunk_handle);
