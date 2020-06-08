@@ -47,7 +47,7 @@ Status ChunkserverImpl::openDatabase() {
 // Call this before anything else
 Status ChunkserverImpl::start() {
   // Sleep for some number of seconds (DEBUGGING)
-  std::this_thread::sleep_for (std::chrono::seconds(6));
+  std::this_thread::sleep_for (std::chrono::seconds(1));
   cout << "Starting" << endl;
 
   // Return an error if the storage directory doesn't exist

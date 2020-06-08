@@ -123,7 +123,6 @@ void print_time_point(std::chrono::system_clock::time_point timePoint) {
 /* } */
 
 void RunChunkServerClient(string master_address, string self_address) {
-  cout << "hi there" << endl;
   // Instantiate the channel
   auto channel = grpc::CreateChannel(master_address, grpc::InsecureChannelCredentials());
   auto path = absl::GetFlag(FLAGS_chunk_path);
@@ -166,7 +165,7 @@ int main(int argc, char **argv) {
   // Parse command line arguments
   absl::ParseCommandLine(argc, argv);
 
-  cout << "Hello world!!!!!!" << endl;
+  cout << "Chunkserver starting" << endl;
 
   // Get the master address
   std::string master_ip = absl::GetFlag(FLAGS_master_ip);

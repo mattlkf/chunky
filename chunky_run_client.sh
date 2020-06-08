@@ -5,4 +5,4 @@ echo "Launching client #${CLIENT_INDEX}"
 
 NAME="client_$CLIENT_INDEX"
 
-docker run --name $NAME --network gfs-net client --master_ip master --master_port 50051
+docker run --rm --name $NAME --network gfs-net client --master_ip master --master_port 50051

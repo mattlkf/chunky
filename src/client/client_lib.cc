@@ -93,10 +93,15 @@ vector<string> ClientLib::get_chunkservers(string fname, size_t chunk_index, str
 
   vector<string> chunkserver_names;
   if (status.ok()) {
-    cout << "Success! Got some chunkservers to query" << endl;
     for (int i=0;i<reply.chunkserver_names_size();i++) {
       chunkserver_names.push_back(reply.chunkserver_names(i));
     }
+
+    cout << "Success! Chunkserver list:";
+    for (string cs : chunkserver_names) {
+      cout << " " << cs;
+    }
+    cout << endl;
 
     chunk_handle = reply.chunk_handle();
   }
@@ -134,7 +139,7 @@ Status ClientLib::connect_to_chunkservers(vector<string> chunkservers) {
   for (string chunkserver: chunkservers) {
     // Skip if we already have a connection to this guy
     if (chunkserver_stubs.count(chunkserver) != 0 || true) {
-      cout << "Initializing a channel to " << chunkserver << endl;
+      /* cout << "Initializing a channel to " << chunkserver << endl; */
       // Begin communication with the chunkserver
       auto channel =
           grpc::CreateChannel(chunkserver, grpc::InsecureChannelCredentials());
@@ -165,7 +170,7 @@ StatusOr<string> ClientLib::get_data_from_chunkserver(string chunkserver, string
   chunkserver::ReadChunkDataReply reply;
   grpc::ClientContext context;
 
-  cout << "Client is querying a chunkserver for data" << endl;
+  cout << "Client is querying " << chunkserver << " for data" << endl;
   auto status = chunkserver_stubs[chunkserver]->ReadChunkData(&context, request, &reply);
 
   if (status.ok()) {
