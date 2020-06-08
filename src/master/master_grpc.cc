@@ -111,6 +111,7 @@ grpc::Status MasterServiceImpl::ReadChunk(ServerContext *context,
     return grpc::Status(grpc::StatusCode::NOT_FOUND, data.status().ToString());
   }
   string chunk_handle = data.ValueOrDie();
+  cout << "Master populated the chunk handle field with " << chunk_handle << "!" << endl;
 
   // Return the list of chunk servers that have this handle
   vector<string> chunkservers = trackchunkservers->get_chunkservers(chunk_handle);

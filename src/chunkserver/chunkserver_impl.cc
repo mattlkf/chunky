@@ -177,6 +177,9 @@ Status ChunkserverImpl::allocateChunk(UUID chunk_handle, VersionNumber vn) {
 
   this->chunk_handles.insert(chunk_handle);
 
+  // Debug
+  cout << "ChunkserverImpl::allocateChunk wrote " << chunk_handle<< " to chunk_handles: count " << this->chunk_handles.count(chunk_handle) << endl;
+
   return Status::OK;
 }
 
@@ -244,19 +247,20 @@ Status ChunkserverImpl::validateChunk(UUID chunk_handle, VersionNumber vn) {
   }
 
   // Check that version number matches (necessary for the protocol)
-  auto stat = getChunkVersionNumber(chunk_handle);
-  if (!stat.status().ok()) {
-    return Status(Code::INTERNAL, "Couldn't get the chunk version number");
-  }
-  if (vn != stat.ValueOrDie()) {
-    return Status(Code::INVALID_ARGUMENT, "Version number does not match");
-  }
+  /* auto stat = getChunkVersionNumber(chunk_handle); */
+  /* if (!stat.status().ok()) { */
+  /*   return Status(Code::INTERNAL, "Couldn't get the chunk version number"); */
+  /* } */
+  /* if (vn != stat.ValueOrDie()) { */
+  /*   return Status(Code::INVALID_ARGUMENT, "Version number does not match"); */
+  /* } */
 
   return Status::OK;
 }
 
 Status ChunkserverImpl::setData(UUID chunk_handle, VersionNumber vn,
                             ClientId client_id, ByteRange range, Data data) {
+  cout << "ChunkserverImpl::setData to chunk handle [" << chunk_handle << "] " << vn << " " << client_id << endl;
   // Check that the data range is OK
   RETURN_IF_ERROR(this->validateRange(range));
 
@@ -266,7 +270,7 @@ Status ChunkserverImpl::setData(UUID chunk_handle, VersionNumber vn,
   // Check if the data is of the right length
   if (data.size() != range.nbytes) {
     return Status(Code::INVALID_ARGUMENT,
-                  "Data length does not match range length");
+                  "Data length " + std::to_string(data.size()) + " does not match range length" + std::to_string(range.nbytes));
   }
 
   // Don't actually write to a file; just buffer it in memory

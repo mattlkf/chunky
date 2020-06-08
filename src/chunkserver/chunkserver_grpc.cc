@@ -61,7 +61,7 @@ grpc::Status
 ChunkserverServiceImpl::SendChunkData(ServerContext *context,
                                       const SendChunkDataRequest *request,
                                       SendChunkDataReply *reply) {
-  cout << "ChunkserverServiceImpl got an SendChunkDataRequest" << endl;
+  cout << "ChunkserverServiceImpl got an SendChunkDataRequest for chunk handle: [" << request->chunk_handle() << "]" << endl;
   /* // Error and success cases both need this */
   /* *reply->mutable_request() = *request; */
 

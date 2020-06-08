@@ -97,6 +97,8 @@ vector<string> ClientLib::get_chunkservers(string fname, size_t chunk_index, str
     for (int i=0;i<reply.chunkserver_names_size();i++) {
       chunkserver_names.push_back(reply.chunkserver_names(i));
     }
+
+    chunk_handle = reply.chunk_handle();
   }
   else {
     cout << "Failure! Did not get any chunkservers" << endl;
@@ -131,12 +133,16 @@ Status ClientLib::allocate(string fname, size_t n_chunks) {
 Status ClientLib::connect_to_chunkservers(vector<string> chunkservers) {
   for (string chunkserver: chunkservers) {
     // Skip if we already have a connection to this guy
-    if (chunkserver_stubs.count(chunkserver) != 0) {
+    if (chunkserver_stubs.count(chunkserver) != 0 || true) {
+      cout << "Initializing a channel to " << chunkserver << endl;
       // Begin communication with the chunkserver
       auto channel =
           grpc::CreateChannel(chunkserver, grpc::InsecureChannelCredentials());
 
       chunkserver_stubs[chunkserver] = chunkserver::Chunkserver::NewStub(channel);
+    }
+    else {
+      cout << "We already have a channel to " << chunkserver << endl;
     }
   }
 
@@ -198,7 +204,7 @@ Status ClientLib::send_data(string fname, size_t chunk_index, ByteRange range, s
   // Get the list of chunkservers from the master
   vector<string> chunkservers = get_chunkservers(fname, chunk_index, chunk_handle);
 
-  cout << "Got chunkservers: ";
+  cout << "For chunk handle " << chunk_handle<< " we got chunkservers: ";
   for (string cs : chunkservers) cout << cs << " ";
   cout << endl;
 
@@ -213,6 +219,7 @@ Status ClientLib::send_data(string fname, size_t chunk_index, ByteRange range, s
   common::ByteRange *br = request.mutable_range();
   br->set_start(range.offset);
   br->set_length(range.nbytes);
+  request.set_data(data);
 
   chunkserver::CommitChunkDataRequest commit_request;
   commit_request.set_client_id(client_id);
