@@ -36,11 +36,31 @@ Status ChunkyFile::write(ByteRange range, Data data) { return Status::OK; }
 
 Status ChunkyFile::close() { return Status::OK; }
 
-Status ClientLib::get_chunkservers(string fname, size_t chunk_index) {
-  return Status::OK;
+// TODO: wrap this in a StatusOr
+vector<string> ClientLib::get_chunkservers(string fname, size_t chunk_index) {
+  master::ClientReadChunk request;
+  request.set_client_name(client_id);
+  request.set_file_name(fname);
+  request.set_chunk_index(chunk_index);
+
+  master::ClientReadChunkReply reply;
+  grpc::ClientContext context;
+
+  cout << "Client is querying master for a list of chunkservers" << endl;
+  auto status = master_stub->ReadChunk(&context, request, &reply);
+
+  vector<string> chunkserver_names;
+  if (status.ok()) {
+    for (int i=0;i<reply.chunkserver_names_size();i++) {
+      chunkserver_names.push_back(reply.chunkserver_names(i));
+    }
+  }
+  // TODO: failure cases???
+  return chunkserver_names;
 }
 
 string ClientLib::get_data(string fname, size_t chunk_index, ByteRange range) {
+  vector<string> chunkservers = get_chunkservers(fname, chunk_index);
   return "";
 }
 
