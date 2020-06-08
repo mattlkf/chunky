@@ -51,16 +51,37 @@ vector<string> ClientLib::get_chunkservers(string fname, size_t chunk_index) {
 
   vector<string> chunkserver_names;
   if (status.ok()) {
+    cout << "Success! Got some chunkservers to query" << endl;
     for (int i=0;i<reply.chunkserver_names_size();i++) {
       chunkserver_names.push_back(reply.chunkserver_names(i));
     }
+  }
+  else {
+    cout << "Failure! Did not get any chunkservers" << endl;
   }
   // TODO: failure cases???
   return chunkserver_names;
 }
 
+Status ClientLib::connect_to_chunkservers(vector<string> chunkservers) {
+  for (string chunkserver: chunkservers) {
+    // Skip if we already have a connection to this guy
+    if (chunkserver_stubs.count(chunkserver) != 0) {
+      // Begin communication with the chunkserver
+      auto channel =
+          grpc::CreateChannel(chunkserver, grpc::InsecureChannelCredentials());
+
+      chunkserver_stubs[chunkserver] = chunkserver::Chunkserver::NewStub(channel);
+    }
+  }
+
+  return Status::OK;
+}
+
 string ClientLib::get_data(string fname, size_t chunk_index, ByteRange range) {
   vector<string> chunkservers = get_chunkservers(fname, chunk_index);
+
+  connect_to_chunkservers(chunkservers);
   return "";
 }
 

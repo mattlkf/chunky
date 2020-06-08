@@ -24,6 +24,7 @@
 // gRPC
 #include <grpcpp/grpcpp.h>
 #include "src/protos/master/master.grpc.pb.h"
+#include "src/protos/chunkserver/chunkserver.grpc.pb.h"
 
 // Threading
 #include <thread>
@@ -99,6 +100,7 @@ public:
   string get_data(string fname, size_t chunk_index, ByteRange range);
 
 private:
+  Status connect_to_chunkservers(vector<string>);
   string master_address;
   string self_address;
   
@@ -107,6 +109,8 @@ private:
 
   // This is what we can use to send messages to the Master
   std::unique_ptr<master::Master::Stub> master_stub;
+
+  map<string, std::unique_ptr<chunkserver::Chunkserver::Stub>> chunkserver_stubs;
 
   // TODO: we actually need to maintain a few handles to the chunkservers...
   /* std::unique_ptr<chunkserver::chunkserver::Stub> stub_; */
