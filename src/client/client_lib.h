@@ -111,10 +111,9 @@ private:
   // This is what we can use to send messages to the Master
   std::unique_ptr<master::Master::Stub> master_stub;
 
+  // TODO: we actually need to maintain a few handles to the chunkservers...
   map<string, std::unique_ptr<chunkserver::Chunkserver::Stub>> chunkserver_stubs;
 
-  // TODO: we actually need to maintain a few handles to the chunkservers...
-  /* std::unique_ptr<chunkserver::chunkserver::Stub> stub_; */
 };
 
 #endif  // GFS_SERVER_CHUNK_SERVER_H_

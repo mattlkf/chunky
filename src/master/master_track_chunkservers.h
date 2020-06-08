@@ -7,6 +7,8 @@
 #include <set>
 #include <vector>
 #include <shared_mutex>
+#include <chrono>
+#include <random>
 
 // gRPC
 #include <grpcpp/grpcpp.h>
@@ -14,10 +16,12 @@
 #include "src/protos/chunkserver/chunkserver.grpc.pb.h"
 
 using std::string;
+using std::vector;
 
 class MasterTrackChunkservers {
 public:
   void hi();
+  MasterTrackChunkservers(size_t n_replicas);
 
   // Record that we heard a heartbeat from a chunkserver
   // Returns true if it's the first time we've heard from this chunkserver
@@ -39,7 +43,21 @@ public:
   // Register a chunkserver with the master
   void store_reverse_channel(string chunkserver);
 
+  // Which chunk servers store this chunk handle?
+  vector<string> get_chunkservers(string chunk_handle);
+
+  // Allocate a file of a given number of chunks..
+  void allocate(string fname, int n_chunks);
+
+  // Ask a particular chunkserver to allocate a particular chunk handle
+  grpc::Status request_allocate_chunk(string chunkserver, string chunk_handle);
+
 private:
+  size_t n_replicas;
+  string random_string(int n);
+
+  std::minstd_rand0 *rgen;
+
   // Keep track of the last time we heard from each chunkserver
   mutable std::shared_mutex last_heard_mutex;
   std::map<std::string, std::chrono::system_clock::time_point> last_heard;
@@ -57,6 +75,10 @@ private:
   // Way to contact chunkservers
   mutable std::shared_mutex chunkserver_stubs_mutex;
   std::map<std::string, std::unique_ptr<chunkserver::Chunkserver::Stub>> chunkserver_stubs;
+
+  // Just keep track of all chunkservers
+  mutable std::shared_mutex active_chunk_servers_mutex;
+  std::vector<string> active_chunk_servers;
 
 };
 

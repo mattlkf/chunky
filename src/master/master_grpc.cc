@@ -93,6 +93,7 @@ Status MasterServiceImpl::AllocateChunk(ServerContext *context,
                                         const ClientAllocateChunk *request,
                                         ClientAllocateChunkReply *reply) {
   cout << "Master received a ClientAllocateChunk request" << endl;
+  trackchunkservers->allocate(request->file_name(), request->n_chunks());
   return Status::OK;
 }
 
@@ -101,12 +102,17 @@ Status MasterServiceImpl::ReadChunk(ServerContext *context,
                                     ClientReadChunkReply *reply) {
   cout << "Master received a ClientReadChunk request" << endl;
 
-  // TODO: compute the chunk handle for this file,chunk index tuple
-  // TODO: return the list of chunk servers that have this handle
-  
+  // DONE: compute the chunk handle for this file,chunk index tuple
   string chunk_handle = trackchunkservers->get_chunk_handle(request->file_name(), request->chunk_index());
-
   reply->set_chunk_handle(chunk_handle);
+
+  // DONE: return the list of chunk servers that have this handle
+  vector<string> chunkservers = trackchunkservers->get_chunkservers(chunk_handle);
+
+  // TODO: populate the reply with the list of chunkservers
+  for (string chunkserver : chunkservers) {
+    reply->add_chunkserver_names(chunkserver);
+  }
 
   return Status::OK;
 }

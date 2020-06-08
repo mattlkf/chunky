@@ -62,8 +62,9 @@ int main(int argc, char **argv) {
   // Parse command line arguments
   absl::ParseCommandLine(argc, argv);
 
-  // Create logic classes
-  MasterTrackChunkservers trackchunkservers;
+  // Create implementation class
+  std::cout << "Creating MasterTrackChunkServers in master" << std::endl;
+  MasterTrackChunkservers trackchunkservers(3);
 
   // Begin the server in a separate thread
   std::thread th(&RunServer, &trackchunkservers);
