@@ -34,11 +34,11 @@ ABSL_FLAG(std::string, master_port, "50051", "master port");
 using namespace std;
 
 int main(int argc, char **argv) {
-  absl::SetProgramUsageMessage("A chunkserver that updates the master periodically");
+  absl::SetProgramUsageMessage("A client");
   // Parse command line arguments
   absl::ParseCommandLine(argc, argv);
 
-  cout << "Hello world!!!!!!" << endl;
+  cout << "I'm a client!" << endl;
 
   std::string master_ip = absl::GetFlag(FLAGS_master_ip);
   std::string master_port = absl::GetFlag(FLAGS_master_port);
@@ -52,10 +52,10 @@ int main(int argc, char **argv) {
   ChunkyFile f = Chunky.open("test.txt");
 
   // Read from the file
-  Data s;
-  size_t bytes_read = f.read({0,5}, s);
+  /* Data s; */
+  /* size_t bytes_read = f.read({0,5}, s); */
 
-  cout << s << endl;
+  /* cout << s << endl; */
 
   return 0;
 }

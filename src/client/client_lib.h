@@ -80,6 +80,7 @@ class ClientLib; // needed because these two classes are mutually recursive
 class ChunkyFile {
   public:
     ChunkyFile(ClientLib *client_lib, size_t chunk_size_bytes, string fname);
+    Status reserve(size_t bytes);
     size_t read(ByteRange, Data&);
     Status write(ByteRange, Data);
     Status close();
@@ -100,6 +101,8 @@ public:
   StatusOr<string> get_data(string fname, size_t chunk_index, ByteRange range);
 
   Status send_data(string fname, size_t chunk_index, ByteRange range, string data);
+
+  Status allocate(string fname, size_t n_chunks);
 
 private:
   Status connect_to_chunkservers(vector<string>);

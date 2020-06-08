@@ -51,56 +51,40 @@ using master::HelloRequest;
 
 using namespace std;
 
-class MasterClient {
-public:
-  MasterClient(std::shared_ptr<Channel> channel)
-      : stub_(Master::NewStub(channel)) {}
+/* class MasterClient { */
+/* public: */
+/*   MasterClient(std::shared_ptr<Channel> channel) */
+/*       : stub_(Master::NewStub(channel)) {} */
 
-  // Assembles the client's payload, sends it and presents the response back
-  // from the server.
-  std::string SayHello(const std::string &user) {
-    // Data we are sending to the server.
-    HelloRequest request;
-    request.set_name(user);
+/*   // Assembles the client's payload, sends it and presents the response back */
+/*   // from the server. */
+/*   std::string SayHello(const std::string &user) { */
+/*     // Data we are sending to the server. */
+/*     HelloRequest request; */
+/*     request.set_name(user); */
 
-    // Container for the data we expect from the server.
-    HelloReply reply;
+/*     // Container for the data we expect from the server. */
+/*     HelloReply reply; */
 
-    // Context for the client. It could be used to convey extra information to
-    // the server and/or tweak certain RPC behaviors.
-    ClientContext context;
+/*     // Context for the client. It could be used to convey extra information to */
+/*     // the server and/or tweak certain RPC behaviors. */
+/*     ClientContext context; */
 
-    // The actual RPC.
-    grpc::Status status = stub_->SayHello(&context, request, &reply);
+/*     // The actual RPC. */
+/*     grpc::Status status = stub_->SayHello(&context, request, &reply); */
 
-    // Act upon its status.
-    if (status.ok()) {
-      return reply.message();
-    } else {
-      std::cout << status.error_code() << ": " << status.error_message()
-                << std::endl;
-      return "RPC failed";
-    }
-  }
-
-private:
-  std::unique_ptr<Master::Stub> stub_;
-};
-
-/* class GreeterServiceImpl final : public Greeter::Service { */
-/*   Status SayHello(ServerContext *context, const HelloRequest *request, */
-/*                   HelloReply *reply) override { */
-/*     std::string prefix("Hello "); */
-/*     reply->set_message(prefix + request->name()); */
-/*     return Status::OK; */
+/*     // Act upon its status. */
+/*     if (status.ok()) { */
+/*       return reply.message(); */
+/*     } else { */
+/*       std::cout << status.error_code() << ": " << status.error_message() */
+/*                 << std::endl; */
+/*       return "RPC failed"; */
+/*     } */
 /*   } */
 
-/*   Status SayHelloAgain(ServerContext *context, const HelloRequest *request, */
-/*                        HelloReply *reply) override { */
-/*     std::string prefix("Hello again "); */
-/*     reply->set_message(prefix + request->name()); */
-/*     return Status::OK; */
-/*   } */
+/* private: */
+/*   std::unique_ptr<Master::Stub> stub_; */
 /* }; */
 
 // Print Current Time
@@ -109,58 +93,33 @@ void print_time_point(std::chrono::system_clock::time_point timePoint) {
   std::cout << std::ctime(&timeStamp) << std::endl;
 }
 
-/* void RunServer() { */
+/* void RunClient(string master_address, string self_address) { */
 
-/*   std::string client_ip = absl::GetFlag(FLAGS_self_ip); */
-/*   std::string client_port = absl::GetFlag(FLAGS_self_port); */
-/*   std::string client_address = client_ip + ":" + client_port; */
-/*   std::cout << "Client's own address: " << client_address << std::endl; */
+/*   // Instantiate the client. It requires a channel, out of which the actual RPCs */
+/*   // are created. This channel models a connection to an endpoint (in this case, */
+/*   // localhost at port 50051). We indicate that the channel isn't authenticated */
+/*   // (use of InsecureChannelCredentials()). */
+/*   MasterClient masterclient( */
+/*       grpc::CreateChannel(master_address, grpc::InsecureChannelCredentials())); */
 
-/*   GreeterServiceImpl service; */
+/*   // Run the "client" */
+/*   while(true) { */
+/*     std::string reply = masterclient.SayHello(self_address); */
+/*     std::cout << "MasterClient received: " << reply << std::endl; */
 
-/*   ServerBuilder builder; */
-/*   // Listen on the given address without any authentication mechanism. */
-/*   builder.AddListeningPort(client_address, grpc::InsecureServerCredentials()); */
-/*   // Register "service" as the instance through which we'll communicate with */
-/*   // clients. In this case it corresponds to an *synchronous* service. */
-/*   builder.RegisterService(&service); */
-/*   // Finally assemble the server. */
-/*   std::unique_ptr<Server> server(builder.BuildAndStart()); */
-/*   std::cout << "Server listening on " << client_address << std::endl; */
-
-/*   // Wait for the server to shutdown. Note that some other thread must be */
-/*   // responsible for shutting down the server for this call to ever return. */
-/*   server->Wait(); */
+/*     // create a time point pointing to 1 second in future */
+/*     std::chrono::system_clock::time_point timePoint = */
+/*         std::chrono::system_clock::now() + std::chrono::seconds(1); */
+/*     std::cout << "Going to Sleep Until :: "; */
+/*     print_time_point(timePoint); */
+/*     // Sleep Till specified time point */
+/*     // Accepts std::chrono::system_clock::time_point as argument */
+/*     std::this_thread::sleep_until(timePoint); */
+/*     std::cout << "Current Time :: "; */
+/*     // Print Current Time */
+/*     print_time_point(std::chrono::system_clock::now()); */
+/*   } */
 /* } */
-
-void RunClient(string master_address, string self_address) {
-
-
-  // Instantiate the client. It requires a channel, out of which the actual RPCs
-  // are created. This channel models a connection to an endpoint (in this case,
-  // localhost at port 50051). We indicate that the channel isn't authenticated
-  // (use of InsecureChannelCredentials()).
-  MasterClient masterclient(
-      grpc::CreateChannel(master_address, grpc::InsecureChannelCredentials()));
-
-  // Run the "client"
-  while(true) {
-    std::string reply = masterclient.SayHello(self_address);
-    std::cout << "MasterClient received: " << reply << std::endl;
-
-    // create a time point pointing to 1 second in future
-    std::chrono::system_clock::time_point timePoint =
-        std::chrono::system_clock::now() + std::chrono::seconds(1);
-    std::cout << "Going to Sleep Until :: ";
-    print_time_point(timePoint);
-    // Sleep Till specified time point
-    // Accepts std::chrono::system_clock::time_point as argument
-    std::this_thread::sleep_until(timePoint);
-    std::cout << "Current Time :: ";
-    // Print Current Time
-    print_time_point(std::chrono::system_clock::now());
-  }
-}
 
 void RunChunkServerClient(string master_address, string self_address) {
   cout << "hi there" << endl;
@@ -205,9 +164,6 @@ int main(int argc, char **argv) {
   std::string self_ip = absl::GetFlag(FLAGS_self_ip);
   std::string self_port = absl::GetFlag(FLAGS_self_port);
   std::string self_address = self_ip + ":" + self_port;
-
-  // Begin the server in a separate thread
-  /* std::thread th(&RunServer); */
 
   // Begin the client
   /* RunClient(master_address, self_address); */

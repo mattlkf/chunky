@@ -10,6 +10,10 @@ ChunkyFile::ChunkyFile(ClientLib *client_lib, size_t chunk_size_bytes,
                        string fname)
     : client_lib(client_lib), chunk_size_bytes(chunk_size_bytes), fname(fname) {}
 
+Status ChunkyFile::reserve(size_t bytes) {
+  return client_lib->allocate(fname, (bytes + chunk_size_bytes - 1) / chunk_size_bytes);
+}
+
 size_t ChunkyFile::read(ByteRange range, Data &data) {
   string buf;
 
@@ -96,6 +100,28 @@ vector<string> ClientLib::get_chunkservers(string fname, size_t chunk_index, str
   }
   // TODO: failure cases???
   return chunkserver_names;
+}
+
+Status ClientLib::allocate(string fname, size_t n_chunks) {
+  master::ClientAllocateChunk request;
+  request.set_client_name(client_id);
+  request.set_file_name(fname);
+  request.set_n_chunks(n_chunks);
+
+  master::ClientAllocateChunkReply reply;
+  grpc::ClientContext context;
+
+  cout << "Client is sending an allocation request to master" << endl;
+  auto status = master_stub->AllocateChunk(&context, request, &reply);
+
+  if (status.ok()) {
+    cout << "Success - master allocated chunks for us" << endl;
+    return Status::OK;
+  }
+  else {
+    cout << "Failure! " << status.error_message() << endl;
+    return Status::UNKNOWN;
+  }
 }
 
 Status ClientLib::connect_to_chunkservers(vector<string> chunkservers) {
