@@ -181,9 +181,9 @@ void RunChunkServerClient(string master_address, string self_address) {
   /* chunkserver.requestWrite("test_chunk", 5, "client_a"); */
 
   // [Testing] Read a chunk file
-  auto ret = chunkserver.getChunkData("test_chunk", 5, {0, 11});
-  auto s = ret.ValueOrDie();
-  cout << "Read: [" << s << "]" << endl;
+  /* auto ret = chunkserver.getChunkData("test_chunk", 5, {0, 11}); */
+  /* auto s = ret.ValueOrDie(); */
+  /* cout << "Read: [" << s << "]" << endl; */
 
   // Wait for the chunkserver thread to end (it doesn't)
   cout << "Join?" << endl;
