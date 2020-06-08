@@ -1,5 +1,8 @@
 #!/bin/bash
+CLIENT_INDEX=${1:-1}
 
-echo "Launching client"
+echo "Launching client #${CLIENT_INDEX}"
 
-docker run --name client --network gfs-net client --master_ip master --master_port 50051
+NAME="client_$CLIENT_INDEX"
+
+docker run --name $NAME --network gfs-net client --master_ip master --master_port 50051

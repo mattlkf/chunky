@@ -145,6 +145,7 @@ StatusOr<vector<UUID>> ChunkserverImpl::getChunkHandles() {
 }
 
 Status ChunkserverImpl::allocateChunk(UUID chunk_handle, VersionNumber vn) {
+  cout << "ChunkserverImpl::allocateChunk " << chunk_handle << " " << vn << endl;
   // A UUID:VersionNumber pair for the DB
   leveldb::Slice key(chunk_handle);
   leveldb::Slice value((const char *)&vn, sizeof vn);
@@ -154,12 +155,12 @@ Status ChunkserverImpl::allocateChunk(UUID chunk_handle, VersionNumber vn) {
 
   // Check if the chunk_handle already has a database entry
   if (this->loadChunkMeta(chunk_handle).status().code() != Code::NOT_FOUND) {
-    return Status(Code::ALREADY_EXISTS, "Chunk already allocated in DB");
+    return Status(Code::ALREADY_EXISTS, "Chunk " + chunk_handle + " already allocated in DB");
   }
 
   // Check if there's already a backing file for this chunk
   if (fs::exists(chunk_file_path)) {
-    return Status(Code::ALREADY_EXISTS, "Chunk backing file exists in FS");
+    return Status(Code::ALREADY_EXISTS, "Chunk backing file " + chunk_file_path.string() + " exists in FS");
   }
 
   // Actually write to the DB

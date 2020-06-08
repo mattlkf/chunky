@@ -1,6 +1,9 @@
 #include "src/master/master_track_chunkservers.h"
 #include <iostream>
 
+using std::cout;
+using std::endl;
+
 void MasterTrackChunkservers::hi() {
   std::cout << "Hi from MasterTrackChunkservers" << std::endl;
 }
@@ -105,9 +108,13 @@ void MasterTrackChunkservers::allocate(string fname, int n_chunks) {
     {
       std::shared_lock lock(active_chunk_servers_mutex);
       size_t k = std::min(n_replicas, active_chunk_servers.size());
+      cout << "Will allocate on " << k << " replicas" << std::endl;
       while (chosen_chunkservers.size() < k) {
         // Choose a random chunkserver
         string candidate_chunkserver = active_chunk_servers[(*rgen)() % k];
+
+        // Don't re-allocate on the same chunkserver
+        if (chosen_chunkservers.count(candidate_chunkserver) != 0) continue;
 
         // 3) Request that they agree to host the chunk
         auto status =
@@ -154,19 +161,33 @@ void MasterTrackChunkservers::show_master_state_view() {
       std::chrono::system_clock::now();
   std::cout << std::endl;
 
-  // Just reading the state: be non-exclusive
-  std::shared_lock lock(last_heard_mutex);
+  // Show the time each chunkserver was last heard from
+  {
+    std::shared_lock lock(last_heard_mutex);
 
-  for (auto const &[ip, t] : last_heard) {
-    // How long ago was this ip heard from?
-    auto delta_ms =
-        std::chrono::duration_cast<std::chrono::milliseconds>(timePointNow - t);
+    for (auto const &[ip, t] : last_heard) {
+      // How long ago was this ip heard from?
+      auto delta_ms =
+          std::chrono::duration_cast<std::chrono::milliseconds>(timePointNow - t);
 
-    std::time_t timeStamp = std::chrono::system_clock::to_time_t(t);
-    string last_heard_time_str = std::ctime(&timeStamp);
-    std::cout << ip << " " << (delta_ms.count() <= 1000 ? "OK" : "NOT OK")
-              << " " << delta_ms.count() << " " << std::endl;
-    /* std::cout << ip << " " << std::ctime(&timeStamp); */
+      std::time_t timeStamp = std::chrono::system_clock::to_time_t(t);
+      string last_heard_time_str = std::ctime(&timeStamp);
+      std::cout << ip << " " << (delta_ms.count() <= 1000 ? "OK" : "NOT OK")
+                << " " << delta_ms.count() << " " << std::endl;
+      /* std::cout << ip << " " << std::ctime(&timeStamp); */
+    }
+  }
+
+  // Display the mappings from chunkservers to chunks
+  {
+    std::shared_lock lock(chunk_maps_mutex);
+    for (auto const &[chunkserver, chunk_handles] : chunkserver_to_chunks) {
+      cout << endl;
+      cout << "Chunks of [" << chunkserver << "]" << endl;
+      for (const string &chunk_handle : chunk_handles) {
+        cout << "   " << chunk_handle << endl;
+      }
+    }
   }
 }
 
