@@ -96,11 +96,12 @@ public:
   Status start();
 
   ChunkyFile open(string fname);
-  vector<string> get_chunkservers(string fname, size_t chunk_index);
+  vector<string> get_chunkservers(string fname, size_t chunk_index, string &chunk_handle);
   string get_data(string fname, size_t chunk_index, ByteRange range);
 
 private:
   Status connect_to_chunkservers(vector<string>);
+  StatusOr<string> get_data_from_chunkserver(string chunkserver, string chunk_handle, ByteRange range);
   string master_address;
   string self_address;
   

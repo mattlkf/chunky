@@ -37,7 +37,7 @@ Status ChunkyFile::write(ByteRange range, Data data) { return Status::OK; }
 Status ChunkyFile::close() { return Status::OK; }
 
 // TODO: wrap this in a StatusOr
-vector<string> ClientLib::get_chunkservers(string fname, size_t chunk_index) {
+vector<string> ClientLib::get_chunkservers(string fname, size_t chunk_index, string &chunk_handle) {
   master::ClientReadChunk request;
   request.set_client_name(client_id);
   request.set_file_name(fname);
@@ -78,10 +78,26 @@ Status ClientLib::connect_to_chunkservers(vector<string> chunkservers) {
   return Status::OK;
 }
 
-string ClientLib::get_data(string fname, size_t chunk_index, ByteRange range) {
-  vector<string> chunkservers = get_chunkservers(fname, chunk_index);
+StatusOr<string> ClientLib::get_data_from_chunkserver(string chunkserver, string chunk_handle, ByteRange range) {
+  string str;
+  return str;
+}
 
+string ClientLib::get_data(string fname, size_t chunk_index, ByteRange range) {
+  // TODO: do this repeatedly until success.
+  string chunk_handle;
+  // Get the list of chunkservers from the master
+  vector<string> chunkservers = get_chunkservers(fname, chunk_index, chunk_handle);
+
+  // Establish a connection to any chunkservers that have not yet been connected to
   connect_to_chunkservers(chunkservers);
+
+  // Query at least one of the chunkservers for data
+  for (string chunkserver : chunkservers) {
+    auto status = get_data_from_chunkserver(chunkserver, chunk_handle, range);
+  }
+
+
   return "";
 }
 
