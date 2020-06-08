@@ -14,7 +14,6 @@ using grpc::ClientContext;
 using grpc::Server;
 using grpc::ServerBuilder;
 using grpc::ServerContext;
-using grpc::Status;
 using master::HelloReply;
 using master::HelloRequest;
 using master::Master;
@@ -34,25 +33,24 @@ using master::ClientWriteChunkReply;
 using namespace std;
 
 /* class MasterServiceImpl final : public Master::Service { */
-Status MasterServiceImpl::SayHello(ServerContext *context,
+grpc::Status MasterServiceImpl::SayHello(ServerContext *context,
                                    const HelloRequest *request,
                                    HelloReply *reply) {
   std::string prefix("Master says ");
   trackchunkservers->register_heartbeat(request->name());
-  /* trackchunkservers->hi(); */
   reply->set_message(prefix + request->name());
-  return Status::OK;
+  return grpc::Status::OK;
 }
 
-Status MasterServiceImpl::SayHelloAgain(ServerContext *context,
+grpc::Status MasterServiceImpl::SayHelloAgain(ServerContext *context,
                                         const HelloRequest *request,
                                         HelloReply *reply) {
   std::string prefix("Master says again ");
   reply->set_message(prefix + request->name());
-  return Status::OK;
+  return grpc::Status::OK;
 }
 
-Status MasterServiceImpl::SendHeartbeat(ServerContext *context,
+grpc::Status MasterServiceImpl::SendHeartbeat(ServerContext *context,
                                         const ChunkserverHeartbeat *request,
                                         ChunkserverHeartbeatReply *reply) {
   cout << "Master received a SendHeartbeat request" << endl;
@@ -68,10 +66,10 @@ Status MasterServiceImpl::SendHeartbeat(ServerContext *context,
 
   // If the master has not heard this chunkserver before, it needs chunk list
   reply->set_update_needed(never_heard);
-  return Status::OK;
+  return grpc::Status::OK;
 }
 
-Status MasterServiceImpl::SendChunkList(ServerContext *context,
+grpc::Status MasterServiceImpl::SendChunkList(ServerContext *context,
                                         const ChunkserverChunkList *request,
                                         ChunkserverChunkListReply *reply) {
   cout << "Master received a SendChunkList request" << endl;
@@ -86,40 +84,59 @@ Status MasterServiceImpl::SendChunkList(ServerContext *context,
   // and vice versa
 
   trackchunkservers->update_mappings(request->chunkserver_name(), chunk_handles);
-  return Status::OK;
+  return grpc::Status::OK;
 }
 
-Status MasterServiceImpl::AllocateChunk(ServerContext *context,
+grpc::Status MasterServiceImpl::AllocateChunk(ServerContext *context,
                                         const ClientAllocateChunk *request,
                                         ClientAllocateChunkReply *reply) {
   cout << "Master received a ClientAllocateChunk request" << endl;
   trackchunkservers->allocate(request->file_name(), request->n_chunks());
-  return Status::OK;
+  return grpc::Status::OK;
 }
 
-Status MasterServiceImpl::ReadChunk(ServerContext *context,
+grpc::Status MasterServiceImpl::ReadChunk(ServerContext *context,
                                     const ClientReadChunk *request,
                                     ClientReadChunkReply *reply) {
   cout << "Master received a ClientReadChunk request" << endl;
 
-  // DONE: compute the chunk handle for this file,chunk index tuple
-  string chunk_handle = trackchunkservers->get_chunk_handle(request->file_name(), request->chunk_index());
-  reply->set_chunk_handle(chunk_handle);
+  // Grab the associated chunk handle for the (filename,chunk index) tuple if it exists
+  auto data = trackchunkservers->get_chunk_handle(request->file_name(), request->chunk_index());
+  if (!data.status().ok()) {
+    return grpc::Status(grpc::StatusCode::NOT_FOUND, data.status().ToString());
+  }
+  string chunk_handle = data.ValueOrDie();
 
-  // DONE: return the list of chunk servers that have this handle
+  // Return the list of chunk servers that have this handle
   vector<string> chunkservers = trackchunkservers->get_chunkservers(chunk_handle);
 
-  // TODO: populate the reply with the list of chunkservers
+  // Populate the reply with the chunk handle and list of chunkservers
+  reply->set_chunk_handle(chunk_handle);
   for (string chunkserver : chunkservers) {
     reply->add_chunkserver_names(chunkserver);
   }
 
-  return Status::OK;
+  return grpc::Status::OK;
 }
 
-Status MasterServiceImpl::WriteChunk(ServerContext *context,
+grpc::Status MasterServiceImpl::WriteChunk(ServerContext *context,
                                      const ClientWriteChunk *request,
                                      ClientWriteChunkReply *reply) {
   cout << "Master received a ClientWriteChunk request" << endl;
-  return Status::OK;
+  // Grab the associated chunk handle for the (filename,chunk index) tuple if it exists
+  auto data = trackchunkservers->get_chunk_handle(request->file_name(), request->chunk_index());
+  if (!data.status().ok()) {
+    return grpc::Status(grpc::StatusCode::NOT_FOUND, data.status().ToString());
+  }
+  string chunk_handle = data.ValueOrDie();
+
+  // Return the list of chunk servers that have this handle
+  vector<string> chunkservers = trackchunkservers->get_chunkservers(chunk_handle);
+
+  // Populate the reply with the chunk handle and list of chunkservers
+  reply->set_chunk_handle(chunk_handle);
+  for (string chunkserver : chunkservers) {
+    reply->add_chunkserver_names(chunkserver);
+  }
+  return grpc::Status::OK;
 }

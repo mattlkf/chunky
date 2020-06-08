@@ -97,7 +97,9 @@ public:
 
   ChunkyFile open(string fname);
   vector<string> get_chunkservers(string fname, size_t chunk_index, string &chunk_handle);
-  string get_data(string fname, size_t chunk_index, ByteRange range);
+  StatusOr<string> get_data(string fname, size_t chunk_index, ByteRange range);
+
+  Status send_data(string fname, size_t chunk_index, ByteRange range, string data);
 
 private:
   Status connect_to_chunkservers(vector<string>);

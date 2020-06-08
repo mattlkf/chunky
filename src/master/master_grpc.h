@@ -8,7 +8,7 @@ using grpc::ClientContext;
 using grpc::Server;
 using grpc::ServerBuilder;
 using grpc::ServerContext;
-using grpc::Status;
+
 using master::HelloReply;
 using master::HelloRequest;
 using master::Master;
@@ -31,28 +31,28 @@ class MasterServiceImpl final : public Master::Service {
 public:
   explicit MasterServiceImpl(MasterTrackChunkservers *trackchunkservers_)
       : trackchunkservers(trackchunkservers_) {}
-  Status SayHello(ServerContext *context, const HelloRequest *request,
+  grpc::Status SayHello(ServerContext *context, const HelloRequest *request,
                   HelloReply *reply) override;
 
-  Status SayHelloAgain(ServerContext *context, const HelloRequest *request,
+  grpc::Status SayHelloAgain(ServerContext *context, const HelloRequest *request,
                        HelloReply *reply) override;
 
-  Status SendHeartbeat(ServerContext *context,
+  grpc::Status SendHeartbeat(ServerContext *context,
                        const ChunkserverHeartbeat *request,
                        ChunkserverHeartbeatReply *reply) override;
 
-  Status SendChunkList(ServerContext *context,
+  grpc::Status SendChunkList(ServerContext *context,
                        const ChunkserverChunkList *request,
                        ChunkserverChunkListReply *reply) override;
 
-  Status AllocateChunk(ServerContext *context,
+  grpc::Status AllocateChunk(ServerContext *context,
                              const ClientAllocateChunk *request,
                              ClientAllocateChunkReply *reply) override;
 
-  Status ReadChunk(ServerContext *context, const ClientReadChunk *request,
+  grpc::Status ReadChunk(ServerContext *context, const ClientReadChunk *request,
                          ClientReadChunkReply *reply) override;
 
-  Status WriteChunk(ServerContext *context,
+  grpc::Status WriteChunk(ServerContext *context,
                           const ClientWriteChunk *request,
                           ClientWriteChunkReply *reply) override;
 

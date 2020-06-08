@@ -15,8 +15,16 @@
 #include "src/protos/master/master.grpc.pb.h"
 #include "src/protos/chunkserver/chunkserver.grpc.pb.h"
 
+// Protobuf
+#include "google/protobuf/stubs/status.h"
+#include "google/protobuf/stubs/statusor.h"
+
 using std::string;
 using std::vector;
+
+using google::protobuf::util::Status;
+using google::protobuf::util::StatusOr;
+using google::protobuf::util::error::Code;
 
 class MasterTrackChunkservers {
 public:
@@ -38,7 +46,7 @@ public:
   void update_mappings(string chunkserver, std::vector<string> chunk_handles);
 
   // Map (file name, chunk index) to chunk handle
-  string get_chunk_handle(string fname, int chunk_index);
+  StatusOr<string> get_chunk_handle(string fname, int chunk_index);
 
   // Register a chunkserver with the master
   void store_reverse_channel(string chunkserver);

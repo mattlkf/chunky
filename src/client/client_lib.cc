@@ -11,8 +11,7 @@ ChunkyFile::ChunkyFile(ClientLib *client_lib, size_t chunk_size_bytes,
     : client_lib(client_lib), chunk_size_bytes(chunk_size_bytes), fname(fname) {}
 
 size_t ChunkyFile::read(ByteRange range, Data &data) {
-  data.append("Dummy data");
-  size_t initial_length = data.size();
+  string buf;
 
   // For each chunk in the range, get the chunkservers for it...
   size_t start_byte = range.offset;
@@ -26,13 +25,49 @@ size_t ChunkyFile::read(ByteRange range, Data &data) {
     size_t chunk_start_byte = std::max(start_byte, i * chunk_size_bytes);
     size_t chunk_len_bytes = std::min((i+1)*chunk_size_bytes, start_byte+len_bytes) - chunk_start_byte;
 
-    data.append(client_lib->get_data(fname, i, {chunk_start_byte, chunk_len_bytes}));
+    auto chunk_data = client_lib->get_data(fname, i, {chunk_start_byte, chunk_len_bytes});
+    if (chunk_data.status().ok()) {
+      buf.append(chunk_data.ValueOrDie());
+    }
+    else {
+      std::cout << "One chunk failed" << std::endl;
+      break;
+    }
+
   }
 
-  return data.size() - initial_length;
+  data.append(buf);
+  return buf.length();
 }
 
-Status ChunkyFile::write(ByteRange range, Data data) { return Status::OK; }
+Status ChunkyFile::write(ByteRange range, Data data) { 
+
+  // For each chunk in the range, get the chunkservers for it...
+  size_t start_byte = range.offset;
+  size_t len_bytes = range.nbytes;
+
+  size_t starting_index = start_byte / chunk_size_bytes; // the chunk containing the first byte needed
+  size_t last_index = (start_byte + len_bytes - 1) / chunk_size_bytes; // the chunk containing the last byte needed
+
+  // In this loop i is the chunk index
+  int data_pos = 0;
+  for(size_t i = starting_index; i <= last_index; i++) {
+    size_t chunk_start_byte = std::max(start_byte, i * chunk_size_bytes);
+    size_t chunk_len_bytes = std::min((i+1)*chunk_size_bytes, start_byte+len_bytes) - chunk_start_byte;
+
+    // Grab a slice of the string
+    const string slice = data.substr(data_pos, chunk_len_bytes);
+    data_pos += chunk_len_bytes;
+
+    // TODO: re-try on failure
+    auto status = client_lib->send_data(fname, i, {chunk_start_byte, chunk_len_bytes}, slice); 
+    if (!status.ok()) {
+      return Status::UNKNOWN;
+    }
+  }
+
+  return Status::OK;
+}
 
 Status ChunkyFile::close() { return Status::OK; }
 
@@ -107,7 +142,7 @@ StatusOr<string> ClientLib::get_data_from_chunkserver(string chunkserver, string
   }
 }
 
-string ClientLib::get_data(string fname, size_t chunk_index, ByteRange range) {
+StatusOr<string> ClientLib::get_data(string fname, size_t chunk_index, ByteRange range) {
   // TODO: do this repeatedly until success.
   string chunk_handle;
   // Get the list of chunkservers from the master
@@ -118,11 +153,59 @@ string ClientLib::get_data(string fname, size_t chunk_index, ByteRange range) {
 
   // Query at least one of the chunkservers for data
   for (string chunkserver : chunkservers) {
-    auto status = get_data_from_chunkserver(chunkserver, chunk_handle, range);
+    auto data = get_data_from_chunkserver(chunkserver, chunk_handle, range);
+    if (data.status().ok()) {
+      return data.ValueOrDie();
+    }
   }
 
+  return Status::UNKNOWN;
+}
 
-  return "";
+Status ClientLib::send_data(string fname, size_t chunk_index, ByteRange range, string data) {
+  string chunk_handle;
+  // Get the list of chunkservers from the master
+  vector<string> chunkservers = get_chunkservers(fname, chunk_index, chunk_handle);
+
+  // Establish a connection to any chunkservers that have not yet been connected to
+  connect_to_chunkservers(chunkservers);
+  
+  // Send data to the chunkservers
+  chunkserver::SendChunkDataRequest request;
+  request.set_client_id(client_id);
+  request.set_chunk_handle(chunk_handle);
+  request.set_chunk_version(0);
+  common::ByteRange *br = request.mutable_range();
+  br->set_start(range.offset);
+  br->set_length(range.nbytes);
+
+  chunkserver::CommitChunkDataRequest commit_request;
+  commit_request.set_client_id(client_id);
+  commit_request.set_chunk_handle(chunk_handle);
+  commit_request.set_chunk_version(0);
+
+  bool at_least_one_worked = false;
+  for (string chunkserver : chunkservers) {
+    chunkserver::SendChunkDataReply reply;
+    grpc::ClientContext context;
+    cout << "Client is sending data to chunkserver" << endl;
+
+    auto send_status = chunkserver_stubs[chunkserver]->SendChunkData(&context, request, &reply);
+
+    if (!send_status.ok()) {
+      continue;
+    }
+    chunkserver::CommitChunkDataReply commit_reply;
+    grpc::ClientContext commit_context;
+
+    auto commit_status = chunkserver_stubs[chunkserver]->CommitChunkData(&commit_context, commit_request, &commit_reply);
+    
+    if (commit_status.ok()) {
+      at_least_one_worked = true;
+    }
+  }
+
+  return at_least_one_worked ? Status::OK : Status::UNKNOWN;
 }
 
 ClientLib::ClientLib(string master_address) : master_address(master_address) {
