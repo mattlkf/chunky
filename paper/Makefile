@@ -1,4 +1,4 @@
-PAPER = usenix2019_v3.1
+PAPER = chunky
 TEX = $(wildcard *.tex)
 BIB = ${PAPER}.bib
 FIGS = $(wildcard figures/*.pdf figures/*.png graphs/*.pdf graphs/*.png)
