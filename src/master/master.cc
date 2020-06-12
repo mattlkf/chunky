@@ -53,7 +53,7 @@ void PrintState(MasterTrackChunkservers *trackchunkservers) {
     std::cout << "Printing state" << std::endl;
     /* trackchunkservers->show_last_heard(); */
     trackchunkservers->show_master_state_view();
-    std::this_thread::sleep_for (std::chrono::milliseconds(3000));
+    std::this_thread::sleep_for (std::chrono::milliseconds(100));
   }
 }
 

@@ -1,6 +1,10 @@
 #include "client_lib.h"
 #include <ctime>
 #include <random>
+#include <algorithm>
+#include <cstdlib>
+#include <chrono>
+
 /* ChunkserverImpl::ChunkserverImpl(std::shared_ptr<Channel> channel, string
  * self_address, fs::path path, size_t chunk_size_bytes) */
 /*     : stub_(master::Master::NewStub(channel)), self_address(self_address),
@@ -14,6 +18,10 @@ Status ChunkyFile::reserve(size_t bytes) {
   size_t n_chunks = (bytes + chunk_size_bytes - 1) / chunk_size_bytes;
   cout << "ChunkyFile::reserve -- With a chunk size of " << chunk_size_bytes << " we reserve " << n_chunks << " for " << bytes << " bytes" << endl;
   return client_lib->allocate(fname, n_chunks); 
+}
+
+string ChunkyFile::name() {
+  return fname;
 }
 
 size_t ChunkyFile::read(ByteRange range, Data &data) {
@@ -138,6 +146,7 @@ Status ClientLib::allocate(string fname, size_t n_chunks) {
 Status ClientLib::connect_to_chunkservers(vector<string> chunkservers) {
   for (string chunkserver: chunkservers) {
     // Skip if we already have a connection to this guy
+    // Unfortunately I had to disable this because it... doesn't work?
     if (chunkserver_stubs.count(chunkserver) != 0 || true) {
       /* cout << "Initializing a channel to " << chunkserver << endl; */
       // Begin communication with the chunkserver
@@ -192,10 +201,16 @@ StatusOr<string> ClientLib::get_data(string fname, size_t chunk_index, ByteRange
   // Establish a connection to any chunkservers that have not yet been connected to
   connect_to_chunkservers(chunkservers);
 
+  // Randomly shuffle the chunkserver list so we don't always query the same one
+  std::random_shuffle(chunkservers.begin(), chunkservers.end());
+
   // Query at least one of the chunkservers for data
   for (string chunkserver : chunkservers) {
     auto data = get_data_from_chunkserver(chunkserver, chunk_handle, range);
     if (data.status().ok()) {
+      // Print which chunkserver we got it from, and the current time - for graphing purposes
+      auto current_time = std::chrono::steady_clock::now() - clientlib_start_time;
+      cout << "[[ " << chunkserver << " " << std::chrono::duration_cast<std::chrono::microseconds>(current_time).count() << " microseconds" << endl;;
       return data.ValueOrDie();
     }
   }
@@ -278,6 +293,9 @@ ClientLib::ClientLib(string master_address) : master_address(master_address) {
 
 Status ClientLib::start() {
   cout << "Starting the client library with ID " << client_id << endl;
+
+  // Record the starting time
+  clientlib_start_time = std::chrono::steady_clock::now();
 
   // Begin communication with the master
   auto channel =

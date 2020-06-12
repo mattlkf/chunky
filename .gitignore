@@ -5,3 +5,4 @@ bazel-*
 greeter_client
 docker/**
 *.swo
+*.txt

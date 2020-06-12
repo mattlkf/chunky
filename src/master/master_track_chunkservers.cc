@@ -74,7 +74,8 @@ StatusOr<string> MasterTrackChunkservers::get_chunk_handle(string fname,
   return Status(Code::NOT_FOUND, "Chunk index does not exist");
 }
 
-grpc::Status MasterTrackChunkservers::request_allocate_chunk(string chunkserver,
+grpc::Status
+MasterTrackChunkservers::request_allocate_chunk(string chunkserver,
                                                 string chunk_handle) {
   std::shared_lock lock(chunkserver_stubs_mutex);
 
@@ -96,13 +97,15 @@ grpc::Status MasterTrackChunkservers::request_allocate_chunk(string chunkserver,
 }
 
 Status MasterTrackChunkservers::allocate(string fname, int n_chunks) {
-  std::cout << "Inside MasterTrackChunkservers::allocate -- fname " << fname << ", n_chunks " << n_chunks << std::endl;
+  std::cout << "Inside MasterTrackChunkservers::allocate -- fname " << fname
+            << ", n_chunks " << n_chunks << std::endl;
 
   // Don't allow double-allocation
   {
     std::shared_lock lock(chunk_handles_mutex);
     if (file_chunk_handles[fname].size() > 0) {
-      return Status(Code::UNKNOWN, "File " + fname + " was previously allocated");
+      return Status(Code::UNKNOWN,
+                    "File " + fname + " was previously allocated");
     }
   }
 
@@ -119,10 +122,12 @@ Status MasterTrackChunkservers::allocate(string fname, int n_chunks) {
       cout << "Will allocate on " << k << " replicas" << std::endl;
       while (chosen_chunkservers.size() < k) {
         // Choose a random chunkserver
-        string candidate_chunkserver = active_chunk_servers[(*rgen)() % k];
+        string candidate_chunkserver =
+            active_chunk_servers[(*rgen)() % active_chunk_servers.size()];
 
         // Don't re-allocate on the same chunkserver
-        if (chosen_chunkservers.count(candidate_chunkserver) != 0) continue;
+        if (chosen_chunkservers.count(candidate_chunkserver) != 0)
+          continue;
 
         // 3) Request that they agree to host the chunk
         auto status =
@@ -150,7 +155,6 @@ Status MasterTrackChunkservers::allocate(string fname, int n_chunks) {
       std::unique_lock lock(chunk_maps_mutex);
       file_chunk_handles[fname].push_back(chunk_handle);
     }
-
   }
 
   return Status::OK;
@@ -173,37 +177,73 @@ vector<string> MasterTrackChunkservers::get_chunkservers(string chunk_handle) {
   return chunkservers;
 }
 
+void MasterTrackChunkservers::remove_chunkserver(string chunkserver) {
+  // Remove from last-heard list
+  {
+    std::unique_lock lock(last_heard_mutex);
+    last_heard.erase(chunkserver);
+  }
+  // Remove from list of active chunk servers
+  {
+    std::unique_lock lock(active_chunk_servers_mutex);
+    // erase-remove idiom
+    active_chunk_servers.erase(std::remove(active_chunk_servers.begin(),
+                                           active_chunk_servers.end(),
+                                           chunkserver),
+                               active_chunk_servers.end());
+  }
+
+  // Remove from mappings
+  {
+    std::unique_lock lock(chunk_maps_mutex);
+    for (string chunk_handle : chunkserver_to_chunks[chunkserver]) {
+      chunk_to_chunkservers[chunk_handle].erase(chunkserver);
+    }
+    chunkserver_to_chunks.erase(chunkserver);
+  }
+}
+
 void MasterTrackChunkservers::show_master_state_view() {
   std::chrono::system_clock::time_point timePointNow =
       std::chrono::system_clock::now();
   std::cout << std::endl;
 
+  vector<string> to_erase;
   // Show the time each chunkserver was last heard from
   {
     std::shared_lock lock(last_heard_mutex);
 
     for (auto const &[ip, t] : last_heard) {
       // How long ago was this ip heard from?
-      auto delta_ms =
-          std::chrono::duration_cast<std::chrono::milliseconds>(timePointNow - t);
+      auto delta_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+          timePointNow - t);
 
       std::time_t timeStamp = std::chrono::system_clock::to_time_t(t);
       string last_heard_time_str = std::ctime(&timeStamp);
-      std::cout << ip << " " << (delta_ms.count() <= 1000 ? "OK" : "NOT OK")
+      std::cout << ip << " " << (delta_ms.count() <= 400 ? "OK" : "NOT OK")
                 << " " << delta_ms.count() << " " << std::endl;
       /* std::cout << ip << " " << std::ctime(&timeStamp); */
+      if (delta_ms.count() > 400) {
+        std::cout << "--- REMOVING CHUNKSERVER " << ip << "----" << endl;
+        to_erase.push_back(ip);
+      }
     }
+  }
+
+  for (string chunkserver : to_erase) {
+      remove_chunkserver(chunkserver);
   }
 
   // Display the mappings from chunkservers to chunks
   {
     std::shared_lock lock(chunk_maps_mutex);
     for (auto const &[chunkserver, chunk_handles] : chunkserver_to_chunks) {
-      cout << endl;
-      cout << "Chunks of [" << chunkserver << "]" << endl;
-      for (const string &chunk_handle : chunk_handles) {
-        cout << "   " << chunk_handle << endl;
-      }
+      cout << "[" << chunkserver << ": " << chunk_handles.size() << "]" << endl;
+      /* cout << endl; */
+      /* cout << "Chunks of [" << chunkserver << "]" << endl; */
+      /* for (const string &chunk_handle : chunk_handles) { */
+      /*   cout << "   " << chunk_handle << endl; */
+      /* } */
     }
   }
 }

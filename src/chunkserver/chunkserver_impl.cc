@@ -97,7 +97,8 @@ Status ChunkserverImpl::sendHeartbeats() {
     else {
       cout << status.error_code() << ": " << status.error_message() << endl;
       // Sleep for some number of seconds
-      std::this_thread::sleep_for (std::chrono::seconds(1));
+      /* std::this_thread::sleep_for (std::chrono::seconds(1)); */
+      std::this_thread::sleep_for (std::chrono::milliseconds(200));
       continue;
 
     }
@@ -112,7 +113,7 @@ Status ChunkserverImpl::sendHeartbeats() {
     first_contact_with_master = false; // subsequent iters are not the first
 
     // Sleep for some number of seconds
-    std::this_thread::sleep_for (std::chrono::seconds(1));
+    std::this_thread::sleep_for (std::chrono::milliseconds(200));
   }
   return Status::OK;
 }

@@ -88,6 +88,7 @@ private:
   mutable std::shared_mutex active_chunk_servers_mutex;
   std::vector<string> active_chunk_servers;
 
+  void remove_chunkserver(string chunkserver);
 };
 
 #endif

@@ -84,6 +84,7 @@ class ChunkyFile {
     size_t read(ByteRange, Data&);
     Status write(ByteRange, Data);
     Status close();
+    string name();
 
   private:
     ClientLib *client_lib;
@@ -110,14 +111,16 @@ private:
   string master_address;
   string self_address;
   
-  // TODO: populate this with a random string
   string client_id;
 
   // This is what we can use to send messages to the Master
   std::unique_ptr<master::Master::Stub> master_stub;
 
-  // TODO: we actually need to maintain a few handles to the chunkservers...
+  // For sending messages to the chunkservers. Dynamically populated as the Master provides their addresses.
   map<string, std::unique_ptr<chunkserver::Chunkserver::Stub>> chunkserver_stubs;
+
+  // Just for profiling purposes
+  std::chrono::time_point<std::chrono::steady_clock> clientlib_start_time;
 
 };
 
